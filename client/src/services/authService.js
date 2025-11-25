@@ -64,7 +64,10 @@ api.interceptors.response.use(
 const authService = {
   // credential = information for login
   login: async (credentials) => {
-    const res = await api.post("/auth/login", credentials);
+    const res = await api.post("/auth/login", {
+      email: credentials.email,
+      password: credentials.password
+    });
     if (res.data.refresh_token) {
       localStorage.setItem("refreshToken", res.data.refresh_token);
     }

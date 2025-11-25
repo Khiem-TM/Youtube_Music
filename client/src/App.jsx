@@ -3,8 +3,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import Library from "./pages/Library";
-import Search from "./pages/Search";
+import Upgrade from "./pages/Upgrade";
+import Charts from "./pages/Charts";
 import Layout from "./components/layout/Layout";
+import RankingList from "./pages/RankingList";
 
 function App() {
   return (
@@ -16,7 +18,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/library" element={<Library />} />
-            <Route path="/search" element={<Search />} />
+            <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/explore/charts" element={<Charts />} />
+            <Route path="/explore/charts/playlist" element={<RankingList />} />
           </Routes>
         </Layout>
       </Router>

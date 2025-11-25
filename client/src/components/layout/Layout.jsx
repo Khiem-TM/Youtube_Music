@@ -24,11 +24,11 @@ function Layout({ children }) {
         </aside>
         {/* main */}
         {/*  truyền children để cập nhật component :V  */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto pb-24">{children}</main>
       </div>
 
       {/* part3 */}
-      <div className="border-t border-gray-700 bg-black/80 backdrop-blur">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-700 bg-black/80 backdrop-blur">
         <MusicPlayer />
       </div>
     </div>

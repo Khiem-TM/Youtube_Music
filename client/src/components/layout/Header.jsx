@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { FiUser, FiPlay, FiChevronRight, FiLogOut, FiUpload, FiClock, FiSettings, FiShield, FiHelpCircle, FiMessageSquare } from "react-icons/fi";
 const Header = ({ onToggleSidebar }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -8,9 +9,28 @@ const Header = ({ onToggleSidebar }) => {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
-  const { user, logout, login, register } = useAuth();
+  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: "", email: "" });
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const { user, logout, login, register, updateProfile, changePassword, loading, error } =
+    useAuth();
+
+  useEffect(() => {
+    const handler = (e) => {
+      setProfileOpen(false);
+      setAuthModalOpen(true);
+      setIsLogin(e.detail?.mode !== "register");
+    };
+    window.addEventListener("open-auth-modal", handler);
+    return () => window.removeEventListener("open-auth-modal", handler);
+  }, []);
   return (
     <header className="flex items-center justify-between h-16 px-4 lg:px-6 bg-dark-900 text-white border-b border-gray-700">
       {/* trái --> btn + logo */}
@@ -82,7 +102,6 @@ const Header = ({ onToggleSidebar }) => {
 
       {/* action - tkhoan/ cart --- */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-max">
-        {/* Cast Button  */}
         <button className="p-2 hover:bg-white/10 rounded-full transition text-white">
           <svg
             className="w-6 h-6"
@@ -115,6 +134,7 @@ const Header = ({ onToggleSidebar }) => {
       {/* Modal Profile khi chưa đăng nhập */}
       {profileOpen && !user && (
         <>
+          {/* Tạo ra 1 overlay phủ toàn màn hình --> click = đóng modal */}
           <button
             aria-label="overlay"
             onClick={() => setProfileOpen(false)}
@@ -123,10 +143,13 @@ const Header = ({ onToggleSidebar }) => {
           <div className="fixed top-16 right-4 z-50 w-80 bg-dark-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
             <div className="p-4 text-center">
               <div className="w-16 h-16 rounded-full bg-black border border-gray-700 flex items-center justify-center mx-auto mb-3">
-                <span className="text-xl font-bold text-gray-300">2024</span>
+                <span className="text-xl font-bold text-gray-300">Log In</span>
               </div>
-              <div className="text-sm text-gray-400 mb-4">Đăng nhập để truy cập nhiều tính năng hơn</div>
-              <button 
+              <div className="text-sm text-gray-400 mb-4">
+                Đăng nhập để truy cập nhiều tính năng hơn
+              </div>
+              {/* Mở form đăng nhập */}
+              <button
                 onClick={() => {
                   setProfileOpen(false);
                   setAuthModalOpen(true);
@@ -137,8 +160,9 @@ const Header = ({ onToggleSidebar }) => {
                 Đăng nhập
               </button>
               <div className="text-xs text-gray-500 mt-3">
-                Chưa có tài khoản? 
-                <button 
+                Chưa có tài khoản?
+                {/* Mở form đăng kí */}
+                <button
                   onClick={() => {
                     setProfileOpen(false);
                     setAuthModalOpen(true);
@@ -151,19 +175,97 @@ const Header = ({ onToggleSidebar }) => {
               </div>
             </div>
             <div className="border-t border-gray-700" />
+          </div>
+        </>
+      )}
+      {/* modal khi đang trong phiên đăng nhập */}
+      {profileOpen && user && (
+        <>
+          <button
+            aria-label="overlay"
+            onClick={() => setProfileOpen(false)}
+            className="fixed inset-0 bg-black/0"
+          />
+          <div className="fixed top-16 right-4 z-50 w-80 bg-dark-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+            <div className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-black border border-gray-700 flex items-center justify-center">
+                <span className="text-xs font-bold text-gray-300">
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold truncate">
+                  {user.name}
+                </div>
+                <div className="text-xs text-gray-400 truncate">
+                  {user.email}
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-gray-700" />
             <div className="py-2">
-              <div className="px-4 py-2 text-xs text-gray-500">
-                Đăng nhập để truy cập các tính năng:
-              </div>
-              <div className="flex items-center gap-3 px-4 py-2">
-                <span className="text-sm text-gray-400">• Lưu nhạc yêu thích</span>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-2">
-                <span className="text-sm text-gray-400">• Tạo playlist riêng</span>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-2">
-                <span className="text-sm text-gray-400">• Đồng bộ thiết bị</span>
-              </div>
+              <button
+                onClick={() => {
+                  setProfileForm({ name: user.name || "", email: user.email || "" });
+                  setProfileEditOpen(true);
+                  setProfileOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left"
+              >
+                <FiUser className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Your channel</span>
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <FiPlay className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Get Music Premium</span>
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <span className="text-sm flex-1">Switch account</span>
+                <FiChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+              <button
+                onClick={() => {
+                  logout();
+                  setProfileOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left"
+              >
+                <FiLogOut className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Sign out</span>
+              </button>
+            </div>
+            <div className="border-t border-gray-700" />
+            <div className="py-2">
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <FiUpload className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Upload music</span>
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <FiClock className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">History</span>
+              </button>
+              <button
+                onClick={() => {
+                  setChangePasswordOpen(true);
+                  setProfileOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left"
+              >
+                <FiSettings className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Settings</span>
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <FiShield className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Terms & privacy policy</span>
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <FiHelpCircle className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Help</span>
+              </button>
+              <button className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 w-full text-left">
+                <FiMessageSquare className="w-5 h-5 text-gray-300" />
+                <span className="text-sm">Send feedback</span>
+              </button>
             </div>
           </div>
         </>
@@ -172,8 +274,8 @@ const Header = ({ onToggleSidebar }) => {
       {/* Modal Đăng nhập/Đăng ký */}
       {authModalOpen && (
         <>
-          <button 
-            aria-label="overlay" 
+          <button
+            aria-label="overlay"
             onClick={() => setAuthModalOpen(false)}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           />
@@ -182,55 +284,77 @@ const Header = ({ onToggleSidebar }) => {
               <h2 className="text-xl font-bold text-white mb-6 text-center">
                 {isLogin ? "Đăng nhập" : "Đăng ký"}
               </h2>
-              
+
               {!isLogin && (
                 <div className="mb-4">
-                  <label className="block text-sm text-gray-400 mb-2">Họ tên</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Họ tên
+                  </label>
                   <input
                     type="text"
                     value={authData.name}
-                    onChange={(e) => setAuthData({...authData, name: e.target.value})}
+                    onChange={(e) =>
+                      setAuthData({ ...authData, name: e.target.value })
+                    }
                     className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                     placeholder="Nhập họ tên"
                   />
                 </div>
               )}
-              
+
               <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-2">Email</label>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={authData.email}
-                  onChange={(e) => setAuthData({...authData, email: e.target.value})}
+                  onChange={(e) =>
+                    setAuthData({ ...authData, email: e.target.value })
+                  }
                   className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                   placeholder="email@example.com"
                 />
               </div>
-              
+
               <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-2">Mật khẩu</label>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Mật khẩu
+                </label>
                 <input
                   type="password"
                   value={authData.password}
-                  onChange={(e) => setAuthData({...authData, password: e.target.value})}
+                  onChange={(e) =>
+                    setAuthData({ ...authData, password: e.target.value })
+                  }
                   className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                   placeholder="Nhập mật khẩu"
                 />
               </div>
-              
+
               {!isLogin && (
                 <div className="mb-6">
-                  <label className="block text-sm text-gray-400 mb-2">Xác nhận mật khẩu</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Xác nhận mật khẩu
+                  </label>
                   <input
                     type="password"
                     value={authData.confirmPassword}
-                    onChange={(e) => setAuthData({...authData, confirmPassword: e.target.value})}
+                    onChange={(e) =>
+                      setAuthData({
+                        ...authData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                     className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                     placeholder="Xác nhận mật khẩu"
                   />
                 </div>
               )}
-              
+
+              {error && (
+                <div className="text-red-400 text-sm mb-3 text-center">{error}</div>
+              )}
               <button
                 onClick={async () => {
                   try {
@@ -241,20 +365,26 @@ const Header = ({ onToggleSidebar }) => {
                         name: authData.name,
                         email: authData.email,
                         password: authData.password,
-                        confirmPassword: authData.confirmPassword
+                        confirmPassword: authData.confirmPassword,
                       });
                     }
                     setAuthModalOpen(false);
-                    setAuthData({ name: "", email: "", password: "", confirmPassword: "" });
+                    setAuthData({
+                      name: "",
+                      email: "",
+                      password: "",
+                      confirmPassword: "",
+                    });
                   } catch (error) {
                     console.error("Auth error:", error);
                   }
                 }}
-                className="w-full bg-primary-500 hover:bg-primary-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                disabled={loading}
+                className={`w-full ${loading ? 'bg-primary-500/60' : 'bg-primary-500 hover:bg-primary-600'} text-white py-3 px-4 rounded-lg font-medium transition-colors`}
               >
-                {isLogin ? "Đăng nhập" : "Đăng ký"}
+                {loading ? "Đang xử lý..." : (isLogin ? "Đăng nhập" : "Đăng ký")}
               </button>
-              
+
               <div className="text-center mt-4">
                 <span className="text-sm text-gray-500">
                   {isLogin ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
@@ -266,6 +396,141 @@ const Header = ({ onToggleSidebar }) => {
                   {isLogin ? "Đăng ký" : "Đăng nhập"}
                 </button>
               </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {profileEditOpen && (
+        <>
+          <button
+            aria-label="overlay"
+            onClick={() => setProfileEditOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-96 bg-dark-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-white mb-6 text-center">
+                Cập nhật thông tin
+              </h2>
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Họ tên
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.name}
+                  onChange={(e) =>
+                    setProfileForm({ ...profileForm, name: e.target.value })
+                  }
+                  className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  placeholder="Nhập họ tên"
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) =>
+                    setProfileForm({ ...profileForm, email: e.target.value })
+                  }
+                  className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  placeholder="email@example.com"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    await updateProfile(profileForm);
+                    setProfileEditOpen(false);
+                  } catch (error) {}
+                }}
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+              >
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {changePasswordOpen && (
+        <>
+          <button
+            aria-label="overlay"
+            onClick={() => setChangePasswordOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-96 bg-dark-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-white mb-6 text-center">
+                Đổi mật khẩu
+              </h2>
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Mật khẩu hiện tại
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.oldPassword}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      oldPassword: e.target.value,
+                    })
+                  }
+                  className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  placeholder="Nhập mật khẩu hiện tại"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.password}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      password: e.target.value,
+                    })
+                  }
+                  className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  placeholder="Nhập mật khẩu mới"
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Xác nhận mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  placeholder="Xác nhận mật khẩu mới"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    await changePassword(passwordForm);
+                    setChangePasswordOpen(false);
+                  } catch (error) {}
+                }}
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+              >
+                Cập nhật mật khẩu
+              </button>
             </div>
           </div>
         </>

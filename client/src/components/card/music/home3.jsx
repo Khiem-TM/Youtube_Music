@@ -1,14 +1,6 @@
 import React, { useState } from "react";
 
-// Dữ liệu mẫu (thường được truyền qua props)
-const trackData = {
-  title: "Sài Gòn Đau Lòng Quá, 3107, Điều Khác Lạ,...",
-  artist: "Trạm Cover",
-  duration: "1:26:46",
-  thumbnailUrl: "URL_DEN_ANH_BIA_NHO", // URL ảnh thumbnail nhỏ
-};
-
-function Home3Card({ data = trackData }) {
+function Home3Card({ data }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -17,7 +9,6 @@ function Home3Card({ data = trackData }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* 1. Khu vực Thumbnail/Index */}
       <div className="flex items-center justify-center w-12 h-12 mr-4 flex-shrink-0 relative">
         {/* Thumbnail nhỏ */}
         <img
@@ -26,10 +17,8 @@ function Home3Card({ data = trackData }) {
           className="w-10 h-10 object-cover rounded-sm"
         />
 
-        {/* Nút Play Overlay (Chỉ hiện khi hover) */}
         {isHovered && (
           <button className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-100 transition-opacity duration-150">
-            {/* Icon Play */}
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.06l2.12-2.12 1.41 1.41L12 14.88z" />
             </svg>
@@ -37,7 +26,6 @@ function Home3Card({ data = trackData }) {
         )}
       </div>
 
-      {/* 2. Khu vực Tiêu đề & Nghệ sĩ */}
       <div className="flex-1 min-w-0">
         <div className="text-white text-base truncate font-medium">
           {data.title}
@@ -51,9 +39,7 @@ function Home3Card({ data = trackData }) {
         </div>
       </div>
 
-      {/* 3. Khu vực Nút chức năng & Thời lượng */}
       <div className="flex items-center ml-4 space-x-4">
-        {/* Các nút Like/Dislike/Menu (Chỉ hiện khi hover) */}
         {isHovered ? (
           <>
             {/* Dislike */}
@@ -90,7 +76,6 @@ function Home3Card({ data = trackData }) {
               </svg>
             </button>
 
-            {/* Menu 3 chấm */}
             <button className="text-gray-300 hover:text-white p-1">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 8a2 2 0 110-4 2 2 0 010 4zm-2 4a2 2 0 104 0 2 2 0 00-4 0z"></path>
@@ -98,7 +83,6 @@ function Home3Card({ data = trackData }) {
             </button>
           </>
         ) : (
-          /* Thời lượng (Hiển thị khi KHÔNG hover) */
           <span className="text-white text-base flex-shrink-0">
             {data.duration}
           </span>

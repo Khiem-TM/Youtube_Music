@@ -1,66 +1,85 @@
 import { useState } from 'react'
-import { FiPlay, FiPause, FiSkipBack, FiSkipForward, FiVolume2, FiRepeat, FiShuffle } from 'react-icons/fi'
+import { FiPlay, FiPause, FiSkipBack, FiSkipForward, FiVolume2, FiRepeat, FiShuffle, FiMoreVertical } from 'react-icons/fi'
 
-function MusicPlayer() {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(40)
-  const [duration] = useState(215)
+function MusicPlayer({
+  player = {
+    isPlaying: false,
+    currentTime: 0,
+    duration: 0,
+    track: {
+      title: '',
+      artist: '',
+      thumbnailUrl: '',
+      views: 0,
+      likes: 0,
+    },
+  },
+  onPrev,
+  onNext,
+  onPlayPause,
+}) {
+  const [localPlayer, setLocalPlayer] = useState(player)
 
-  const togglePlay = () => setIsPlaying(!isPlaying)
+  const isPlaying = localPlayer.isPlaying
+  const currentTime = localPlayer.currentTime
+  const duration = localPlayer.duration
+  const track = localPlayer.track || {}
+
+  const togglePlay = () => {
+    const next = { ...localPlayer, isPlaying: !isPlaying }
+    setLocalPlayer(next)
+    onPlayPause && onPlayPause(next.isPlaying)
+  }
 
   const formatTime = (seconds) => {
+    if (!seconds || Number.isNaN(seconds)) return '0:00'
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const progressPercentage = (currentTime / duration) * 100
+  const formatCount = (n) => {
+    if (!n) return '0'
+    if (n >= 1_000_000) return `${Math.floor(n / 1_000_00) / 10}M`
+    if (n >= 1_000) return `${Math.floor(n / 100) / 10}K`
+    return `${n}`
+  }
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0
 
   return (
     <div className="px-4 py-2">
-      <div className="grid grid-cols-[400px_1fr_300px] items-center gap-4">
-        <div className="flex items-center gap-3 overflow-hidden">
-          {/* TODO: replace with current track cover from API */}
-          <img src="/placeholder-cover.jpg" alt="cover" className="w-10 h-10 rounded object-cover" />
-          <div className="min-w-0">
-            {/* TODO: bind track title/artist from player state */}
-            <div className="text-sm font-medium truncate">Emma Sameth, Jeremy Zucker & WOLFE - Spin With You</div>
-            <div className="text-xs text-gray-400">Aminium Music • 2.5M views • 31K likes</div>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-300 hover:text-white">
-              <FiShuffle className="w-4 h-4" />
-            </button>
-            <button className="p-2 text-gray-300 hover:text-white">
+      <div className="relative">
+        <div className="absolute top-0 left-0 h-[2px] bg-primary-500" style={{ width: `${progressPercentage}%` }} />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button onClick={onPrev} className="p-2 text-gray-300 hover:text-white">
               <FiSkipBack className="w-5 h-5" />
             </button>
             <button onClick={togglePlay} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
               {isPlaying ? <FiPause className="w-6 h-6" /> : <FiPlay className="w-6 h-6" />}
             </button>
-            <button className="p-2 text-gray-300 hover:text-white">
+            <button onClick={onNext} className="p-2 text-gray-300 hover:text-white">
               <FiSkipForward className="w-5 h-5" />
             </button>
-            <button className="p-2 text-gray-300 hover:text-white">
-              <FiRepeat className="w-4 h-4" />
-            </button>
+            <span className="text-xs text-gray-400 ml-2">{formatTime(currentTime)} / {formatTime(duration)}</span>
           </div>
 
-          <div className="flex items-center gap-3 w-full max-w-xl mt-2">
-            <span className="text-xs text-gray-400">{formatTime(currentTime)}</span>
-            <div className="h-1 bg-white/10 rounded w-full">
-              <div className="h-1 bg-primary-500 rounded" style={{ width: `${progressPercentage}%` }} />
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <img src={track.thumbnailUrl || '/placeholder-cover.jpg'} alt="cover" className="w-9 h-9 rounded object-cover" />
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{track.title || '—'}</div>
+              <div className="text-xs text-gray-400 truncate">
+                {track.artist || '—'} • {formatCount(track.views)} views • {formatCount(track.likes)} likes
+              </div>
             </div>
-            <span className="text-xs text-gray-400">{formatTime(duration)}</span>
           </div>
-        </div>
 
-        <div className="flex items-center justify-end gap-3">
-          <FiVolume2 className="w-5 h-5 text-gray-300" />
-          <div className="h-1 bg-white/10 rounded w-24">
-            <div className="h-1 bg-white rounded w-3/4" />
+          <div className="flex items-center gap-3">
+            <FiVolume2 className="w-5 h-5 text-gray-300" />
+            <FiRepeat className="w-5 h-5 text-gray-300" />
+            <FiShuffle className="w-5 h-5 text-gray-300" />
+            <FiMoreVertical className="w-5 h-5 text-gray-300" />
           </div>
         </div>
       </div>

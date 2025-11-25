@@ -2,7 +2,16 @@ import { createContext, useContext, useReducer, useEffect } from "react";
 import authService from "../services/authService";
 
 const AuthContext = createContext();
-// Nhận state và action để chuyển sang state mới
+
+// Trạng thái đầu
+const initialState = {
+  user: null,
+  token: localStorage.getItem("token"), // Nếu vẫn đang trong session (token vẫn bị lưu trong storage --> dùng luôn token hiện có )
+  loading: false,
+  error: null,
+};
+
+// Nhận state và action để chuyển sang state mới --> handle các action như dưới (update state)
 const authReducer = (state, action) => {
   switch (action.type) {
     case "SET_LOADING":
@@ -32,17 +41,27 @@ const authReducer = (state, action) => {
   }
 };
 
-// Trạng thái đầu
-const initialState = {
-  user: null,
-  token: localStorage.getItem("token"),
-  loading: false,
-  error: null,
-};
-
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  // lấy userdata từ server
+  const fetchUserProfile = async () => {
+    // double check
+    if (!state.token) return;
+
+    try {
+      // gửi về reducer --> cf trạng thái loading
+      dispatch({ type: "SET_LOADING", payload: true });
+      const userData = await authService.getProfile(state.token); //call api
+      // gửi về reducer --> cf trạng thái set user
+      dispatch({ type: "SET_USER", payload: userData });
+    } catch (error) {
+      console.error("Không thể fetch user profile", error);
+      logout();
+    }
+  };
+
+  // useEffect đồng bộ token từ ReactState --> localStorage (fetch or remove)
   useEffect(() => {
     if (state.token) {
       localStorage.setItem("token", state.token);
@@ -52,50 +71,39 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.token]);
 
-  const fetchUserProfile = async () => {
-    if (!state.token) return;
-
-    try {
-      dispatch({ type: "SET_LOADING", payload: true });
-      const userData = await authService.getProfile(state.token);
-      dispatch({ type: "SET_USER", payload: userData });
-    } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      logout();
-    }
-  };
-
   // Hàm login
   const login = async (email, password) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
-      const response = await authService.login({ email, password });
+      const res = await authService.login({ email, password });
       dispatch({
         type: "LOGIN_SUCCESS",
-        payload: response.data,
+        payload: res.data,
       });
-      return response;
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Đăng nhập thất bại";
-      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      dispatch({
+        type: "SET_ERROR",
+        payload: error.response?.data?.message || "Đăng nhập thất bại",
+      });
       throw error;
     }
   };
 
   // Hàm đăng ký
-  const register = async (userData) => {
+
+  const register = async (userdata) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
-      const response = await authService.register(userData);
+      const res = await authService.register(userdata);
       dispatch({
         type: "LOGIN_SUCCESS",
-        payload: response.data,
+        payload: res.data,
       });
-      return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Đăng ký thất bại";
-      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      dispatch({
+        type: "SET_ERROR",
+        payload: error.response?.data?.message || "Đéo được ok",
+      });
       throw error;
     }
   };
@@ -127,12 +135,39 @@ export const AuthProvider = ({ children }) => {
       });
       return response.data.access_token;
     } catch (error) {
-      console.error("Token refresh failed:", error);
       logout();
       throw error;
     }
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      dispatch({ type: "SET_LOADING", payload: true });
+      await authService.updateProfile(profileData, state.token);
+      // Call lại để đảm bảo fe lấy lại thông tin user Profile đầy đủ sau cập nhật từ BE
+      await fetchUserProfile();
+      dispatch({ type: "SET_LOADING", payload: false });
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Cập nhật thất bại";
+      dispatch({ type: "SET_ERROR", payload: error });
+      throw error;
+    }
+  };
+
+  const changePassword = async (passwordData) => {
+    try {
+      dispatch({ type: "SET_LOADING", payload: true });
+      await authService.changePassword(passwordData, state.token);
+      dispatch({ type: "SET_LOADING", payload: false });
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Đổi mật khẩu thất bại";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      throw error;
+    }
+  };
+
+  // Mọi component con có thể gọi hàm --> mini redux =))
   const value = {
     ...state,
     login,
@@ -140,6 +175,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     refreshToken,
     fetchUserProfile,
+    updateProfile,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -148,7 +185,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("AuthProvider");
   }
   return context;
 };

@@ -6,27 +6,23 @@ import {
   FiHeart,
   FiClock,
   FiPlus,
+  FiStar,
 } from "react-icons/fi";
+import { useAuth } from "../../contexts/AuthContext";
 
 function Sidebar({ collapsed = false }) {
   const location = useLocation();
+  const { user } = useAuth();
 
   // Danh sach items ben sidebar
   const menuItems = [
     { path: "/", label: "Home", icon: FiHome },
     { path: "/explore", label: "Explore", icon: FiCompass },
     { path: "/library", label: "Library", icon: FiMusic },
-    { path: "/upgrade", label: "Upgrade", icon: FiHeart },
   ];
 
   // Map API
-  const playlists = [
-    // TODO: Ta cần thực hiện nối API
-    { path: "/liked", label: "Liked Music", note: "Auto playlist" },
-    { path: "/study", label: "Chill for study", note: "Truong Manh Khiem" },
-    { path: "/hiphop", label: "HIPHOP", note: "Truong Manh Khiem" },
-    { path: "/later", label: "Episodes for Later", note: "Auto playlist" },
-  ];
+  const playlists = [];
 
   return (
     <div className="h-full bg-dark-900 text-gray-300">
@@ -59,33 +55,58 @@ function Sidebar({ collapsed = false }) {
             );
           })}
 
-          <Link
-            to="/upgrade"
-            className={`flex items-center ${
-              collapsed ? "justify-center" : "gap-3"
-            } px-3 py-2 rounded-lg hover:bg-white/10`}
-          >
-            <FiMusic className="w-5 h-5" />
-            {!collapsed && <span className="text-sm font-medium">Upgrade</span>}
-          </Link>
+          {user && (
+            <Link
+              to="/upgrade"
+              className={`flex items-center ${
+                collapsed ? "justify-center" : "gap-3"
+              } px-3 py-2 rounded-lg hover:bg-white/10`}
+            >
+              <FiStar className="w-5 h-5" />
+              {!collapsed && (
+                <span className="text-sm font-medium">Upgrade</span>
+              )}
+            </Link>
+          )}
         </div>
 
-        <div className="my-4">
-          <button
-            className={`w-full flex items-center ${
-              collapsed ? "justify-center" : "gap-3"
-            } px-3 py-2 rounded-lg border border-white/5 hover:bg-white/10`}
-          >
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10">
-              <FiPlus className="w-4 h-4" />
-            </span>
+        {user ? (
+          <div className="my-4">
+            <button
+              className={`w-full flex items-center ${
+                collapsed ? "justify-center" : "gap-3"
+              } px-3 py-2 rounded-lg border border-white/5 hover:bg-white/10`}
+            >
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10">
+                <FiPlus className="w-4 h-4" />
+              </span>
+              {!collapsed && (
+                <span className="text-sm font-medium">New playlist</span>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4">
+            {!collapsed && <div className="border-t border-gray-700 my-3" />}
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }))
+              }}
+              className={`w-full ${
+                collapsed ? "px-2" : "px-4"
+              } h-10 rounded-full bg-[#2b2b2b] hover:bg-[#3a3a3a] text-white`}
+            >
+              {!collapsed ? 'Đăng nhập' : '↪'}
+            </button>
             {!collapsed && (
-              <span className="text-sm font-medium">New playlist</span>
+              <p className="text-[13px] text-gray-400 mt-3 leading-6">
+                Đăng nhập để tạo và chia sẻ danh sách phát, nhận nội dung đề xuất dành riêng cho bạn và hơn thế nữa.
+              </p>
             )}
-          </button>
-        </div>
+          </div>
+        )}
 
-        {!collapsed && (
+        {user && !collapsed && (
           <div className="space-y-1">
             {playlists.map((p) => (
               <Link
