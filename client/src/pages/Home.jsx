@@ -134,7 +134,7 @@ function Home() {
               >
                 <FiChevronLeft />
               </button>
-              {/* right */}
+              {/* x */}
               <button
                 className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] flex items-center justify-center text-white"
                 onClick={() =>
