@@ -6,7 +6,7 @@ import Library from "./pages/Library";
 import Upgrade from "./pages/Upgrade";
 import Charts from "./pages/Charts";
 import Layout from "./components/layout/Layout";
-import RankingList from "./pages/RankingList";
+import RankingList from "./pages/explorePage/RankingList";
 
 function App() {
   return (

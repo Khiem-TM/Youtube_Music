@@ -1,20 +1,25 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Home1Card from "../components/card/music/home1";
+import Home2Card from "../components/card/music/home2";
+import Home3Card from "../components/card/music/home3";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const BASE_URL = "https://youtube-music.f8team.dev/api";
 
 function Home() {
+  // moods
   const [moods, setMoods] = useState([]);
   const [selectedMoodSlug, setSelectedMoodSlug] = useState(null);
   const [quickPicks, setQuickPicks] = useState([]);
+  // public items
   const [homeAlbums, setHomeAlbums] = useState([]);
   const [todaysHits, setTodaysHits] = useState([]);
   const albumsRef = useRef(null);
   const hitsRef = useRef(null);
   const albumsScrollTimer = useRef(null);
   const hitsScrollTimer = useRef(null);
+  // public items scroll
   const [albumsScrolling, setAlbumsScrolling] = useState(false);
   const [hitsScrolling, setHitsScrolling] = useState(false);
 
@@ -110,11 +115,14 @@ function Home() {
         </div>
       </div>
 
+      {/* default page */}
       {!selectedMoodSlug && (
+        // albums for u
         <div className="max-w-[1400px] mx-auto px-6 mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">Albums for you</h2>
+            <h2 className="text-3xl font-bold text-white">Albums for you</h2>
             <div className="flex items-center gap-2">
+              {/* left */}
               <button
                 className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] flex items-center justify-center text-white"
                 onClick={() =>
@@ -126,6 +134,7 @@ function Home() {
               >
                 <FiChevronLeft />
               </button>
+              {/* right */}
               <button
                 className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] flex items-center justify-center text-white"
                 onClick={() =>
@@ -136,6 +145,7 @@ function Home() {
               </button>
             </div>
           </div>
+          {/* list */}
           <div
             ref={albumsRef}
             onScroll={() => {
@@ -151,18 +161,20 @@ function Home() {
               albumsScrolling ? "" : "no-scrollbar"
             } pb-2`}
           >
+            {/* item from list */}
             {homeAlbums.map((item) => (
               <div
                 key={item._id || item.id || item.slug}
-                className="min-w-[220px]"
+                className="min-w-[300px]"
               >
                 <Home1Card data={item} />
               </div>
             ))}
           </div>
 
+          {/* today hits */}
           <div className="flex items-center justify-between mt-8 mb-4">
-            <h2 className="text-2xl font-bold text-white">Today's hits</h2>
+            <h2 className="text-3xl font-bold text-white">Today's hits</h2>
             <div className="flex items-center gap-2">
               <button
                 className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] flex items-center justify-center text-white"
@@ -182,6 +194,7 @@ function Home() {
               </button>
             </div>
           </div>
+          {/* list */}
           <div
             ref={hitsRef}
             onScroll={() => {
@@ -210,25 +223,7 @@ function Home() {
                       key={item._id || item.id || item.slug}
                       className="flex items-center gap-3 bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] rounded-lg p-3"
                     >
-                      <img
-                        src={
-                          (Array.isArray(item.thumbnails)
-                            ? item.thumbnails[0]
-                            : item.thumbnailUrl) || ""
-                        }
-                        alt={item.title}
-                        className="w-12 h-12 rounded object-cover"
-                      />
-                      <div className="flex-1">
-                        <div className="text-white text-sm font-semibold truncate">
-                          {item.title}
-                        </div>
-                        <div className="text-neutral-400 text-xs truncate">
-                          {Array.isArray(item.artists)
-                            ? item.artists.join(", ")
-                            : item.artist || ""}
-                        </div>
-                      </div>
+                      <Home3Card data={item} />
                     </div>
                   ))}
                 </div>

@@ -147,9 +147,7 @@ function Upgrade() {
         </div>
       </section>
 
-      {/* --- CONTENT BLOCKS (ZIGZAG) --- */}
       <section className="max-w-6xl mx-auto px-6 py-20 space-y-32">
-        {/* Block 1: Text Left - Image Right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold text-white">
