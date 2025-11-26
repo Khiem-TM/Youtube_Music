@@ -72,10 +72,10 @@ export const AuthProvider = ({ children }) => {
   }, [state.token]);
 
   // Hàm login
-  const login = async (email, password) => {
+  const login = async (email, pass) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
-      const res = await authService.login({ email, password });
+      const res = await authService.login({ email, pass });
       dispatch({
         type: "LOGIN_SUCCESS",
         payload: res.data,
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       dispatch({
         type: "SET_ERROR",
-        payload: error.response?.data?.message || "Đăng nhập thất bại",
+        payload: error.response?.data?.message || "Đéo được ok",
       });
       throw error;
     }

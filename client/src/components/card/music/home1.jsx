@@ -1,71 +1,84 @@
 import React, { useState } from "react";
+import { Menu, Play } from "lucide-react";
 
 function Home1Card({ data }) {
   const [isHovered, setIsHovered] = useState(false);
 
   const cardClasses =
-    "bg-gray-900 rounded-lg p-4 cursor-pointer transition-all duration-300 transform hover:bg-gray-800";
+    "bg-gray-900 rounded-lg cursor-pointer transition-all duration-300 transform hover:bg-gray-800";
 
-  // Hiệu ứng mờ khi hover
   const overlayClasses =
-    "absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 transition-opacity duration-300";
+    "absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 transition-opacity duration-300";
+
+  // logic for menu
+  const handleMenuClick = (e) => {
+    e.stopPropagation();
+    alert(`Mở tùy chọn cho: ${data.title}`);
+  };
+
+  // logic 4 play
+  const handlePlayClick = (e) => {
+    e.stopPropagation();
+    alert(`Phát: ${data.title}`);
+  };
+
+  const thumbnailUrl = Array.isArray(data.thumbnails)
+    ? data.thumbnails[0]
+    : data.thumbnails;
+  const artistsText = Array.isArray(data.artists)
+    ? data.artists.join(", ")
+    : data.artists;
 
   return (
     <div
       className={cardClasses}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      // Dùng div cha này để xử lý sự kiện hover
     >
-      <div className="relative w-full aspect-square mb-3 overflow-hidden rounded-lg">
-        {/* Ảnh bìa */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-lg">
         <img
-          src={data.imageUrl}
+          src={thumbnailUrl}
           alt={data.title}
           className="w-full h-full object-cover"
         />
 
         <div
-          // Dùng isHovered để kiểm soát opacity và hiển thị các nút
           className={`${overlayClasses} ${
             isHovered ? "opacity-100" : "opacity-0"
           }`}
         >
-          {/* Nút play */}
-          <button className="absolute right-4 bottom-4 w-12 h-12 rounded-full bg-white/90 text-black flex items-center justify-center hover:scale-105 transition-transform duration-150">
-            <svg
-              className="w-6 h-6 ml-0.5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                clipRule="evenodd"
-              ></path>
-            </svg>
-          </button>
-
-          {/* Menu */}
-          <button className="absolute top-4 right-4 text-white p-1 rounded-full hover:bg-black/40 transition-colors duration-150">
-            <svg
-              className="w-5 h-5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 8a2 2 0 110-4 2 2 0 010 4zm-2 4a2 2 0 104 0 2 2 0 00-4 0z"></path>
-            </svg>
+          <button
+            onClick={handlePlayClick}
+            className="w-10 h-10 rounded-full bg-white/30 text-white flex items-center justify-center hover:scale-110 transition-transform duration-150"
+          >
+            <Play className="w-7 h-7 ml-1" fill="currentColor" />
           </button>
         </div>
+
+        <button
+          onClick={handleMenuClick}
+          className={`absolute top-3 right-3  text-white  hover:text-black/60 transition-opacity duration-300 z-10 ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <Menu className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* footer - information */}
-      <h3 className="text-white text-lg font-bold truncate">{data.title}</h3>
-      <p className="text-gray-400 text-sm truncate">
-        {data.type} &bull; {data.artist}
-      </p>
+      <div className="p-4">
+        {" "}
+        <h3 className="text-xl text-white font-semibold line-clamp-2 leading-snug">
+          {" "}
+          {data.title}
+        </h3>
+        <p className="text-base text-neutral-400 mt-1 truncate">
+          {" "}
+          {artistsText}
+        </p>
+        {data.views && (
+          <p className="text-sm text-neutral-500 mt-0.5"> {data.views} views</p>
+        )}
+      </div>
     </div>
   );
 }

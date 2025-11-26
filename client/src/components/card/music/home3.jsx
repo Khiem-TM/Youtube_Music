@@ -10,9 +10,8 @@ function Home3Card({ data }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center justify-center w-12 h-12 mr-4 flex-shrink-0 relative">
-        {/* Thumbnail nhỏ */}
         <img
-          src={data.thumbnailUrl}
+          src={data.thumbnails}
           alt={data.title}
           className="w-10 h-10 object-cover rounded-sm"
         />
@@ -30,12 +29,9 @@ function Home3Card({ data }) {
         <div className="text-white text-base truncate font-medium">
           {data.title}
         </div>
-        <div
-          className="text-gray-400 text-sm truncate"
-          // Gạch chân nghệ sĩ khi hover
-          style={{ textDecoration: isHovered ? "underline" : "none" }}
-        >
-          {data.artist} &bull; {data.duration}
+        <div className="text-gray-400 text-sm truncate">
+          {data.artist}
+          {data.duration}
         </div>
       </div>
 

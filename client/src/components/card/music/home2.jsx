@@ -75,9 +75,7 @@ function Home2Card({ data }) {
       <h3 className="text-white text-base font-medium line-clamp-2 leading-snug">
         {data.title}
       </h3>
-      <p className="text-gray-400 text-sm mt-1 truncate">
-        {data.creator} &bull; {data.views} views
-      </p>
+      <p className="text-gray-400 text-sm mt-1 truncate">{data.artist}</p>
     </div>
   );
 }
