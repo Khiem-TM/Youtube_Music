@@ -8,7 +8,6 @@ import {
   FiMinus,
 } from "react-icons/fi";
 
-// fake data
 const generateSongs = () => {
   return Array.from({ length: 100 }, (_, i) => {
     const trend = Math.random();

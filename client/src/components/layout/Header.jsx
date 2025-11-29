@@ -40,6 +40,9 @@ const Header = ({ onToggleSidebar }) => {
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   const {
     user,
@@ -68,6 +71,8 @@ const Header = ({ onToggleSidebar }) => {
       if (searchQuery.trim().length < 2) {
         setSearchSuggestions([]);
         setShowSuggestions(false);
+        setSearchResults([]);
+        setShowResults(false);
         return;
       }
 
@@ -86,6 +91,35 @@ const Header = ({ onToggleSidebar }) => {
 
     const timeoutId = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Handle search results
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+      setResultsLoading(true);
+      try {
+        const data = await searchService.search(searchQuery, 20, 1);
+        const items = Array.isArray(data) ? data : data?.items || [];
+        setSearchResults(items);
+        setShowResults(true);
+      } catch (error) {
+        console.error("Lỗi tìm kiếm:", error);
+        setSearchResults([]);
+      } finally {
+        setResultsLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchResults, 300);
+    return () => {
+      clearTimeout(timeoutId);
+      setSearchResults([]);
+    };
   }, [searchQuery]);
 
   const handleSearchSubmit = (e) => {
@@ -168,7 +202,12 @@ const Header = ({ onToggleSidebar }) => {
               onFocus={() =>
                 searchQuery.length >= 2 && setShowSuggestions(true)
               }
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onBlur={() => {
+                setTimeout(() => {
+                  setShowSuggestions(false);
+                  setShowResults(false);
+                }, 200);
+              }}
               placeholder="Search songs, albums, artists, podcasts"
               className="w-full bg-transparent border-none outline-none text-white ml-3 placeholder-[#909090] text-[15px] font-medium"
             />
@@ -185,28 +224,58 @@ const Header = ({ onToggleSidebar }) => {
           </div>
         </form>
 
-        {showSuggestions && searchSuggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-            {searchSuggestions.map((suggestion, index) => (
-              <div
-                key={index}
-                className="px-4 py-2 hover:bg-dark-700 cursor-pointer text-sm"
-                onClick={() => {
-                  setSearchQuery(suggestion);
-                  setShowSuggestions(false);
-                }}
-              >
-                {suggestion}
+        {(showSuggestions || showResults || isSearching || resultsLoading) && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+            {(isSearching || resultsLoading) && (
+              <div className="p-2 text-center text-gray-400 text-sm">Đang tìm kiếm...</div>
+            )}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="py-1">
+                {searchSuggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 hover:bg-dark-700 cursor-pointer text-sm"
+                    onMouseDown={() => {
+                      setSearchQuery(suggestion);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+                <div className="border-t border-gray-700" />
               </div>
-            ))}
-          </div>
-        )}
-
-        {isSearching && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-lg z-50 p-2">
-            <div className="text-center text-gray-400 text-sm">
-              Đang tìm kiếm...
-            </div>
+            )}
+            {showResults && searchResults.length > 0 && (
+              <div className="py-1">
+                {searchResults.map((item, idx) => (
+                  <div
+                    key={item._id || item.id || idx}
+                    className="px-4 py-2 hover:bg-dark-700 cursor-pointer"
+                    onMouseDown={() => {
+                      setSearchQuery(item.title || item.name || "");
+                      setShowResults(false);
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={
+                          (Array.isArray(item.thumbnails)
+                            ? item.thumbnails[0]
+                            : item.thumbnailUrl || item.thumb) || ""
+                        }
+                        alt="thumb"
+                        className="w-8 h-8 rounded object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-white truncate">{item.title || item.name || "(không có tiêu đề)"}</div>
+                        <div className="text-xs text-gray-400 truncate">{(Array.isArray(item.artists) ? item.artists.join(", ") : item.artist || item.creator || "")}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

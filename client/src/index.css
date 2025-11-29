@@ -10,3 +10,28 @@ body,
 body {
   margin: 0;
 }
+
+/* Scrollbar helpers */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #3a3a3a #1a1a1a; /* thumb track */
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 10px;
+  background-color: #1a1a1a;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}

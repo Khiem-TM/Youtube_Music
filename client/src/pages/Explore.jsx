@@ -22,7 +22,7 @@ function Explore() {
   // loading scroll for moods and genre
   const categoriesRef = useRef(null);
   const categoriesScrollTimer = useRef(null);
-  const [categoriesScrolling, setCategoriesScrolling] = useState(false); // Đã sửa tên hàm
+  const [categoriesScrolling, setCategoriesScrolling] = useState(false);
 
   // new albums
   const [albums, setAlbums] = useState([]);
@@ -126,11 +126,15 @@ function Explore() {
   return (
     <div className="px-4 pt-4 space-y-8">
       <div className="flex flex-wrap gap-4">
-        <TopButton icon={FiMusic} label="Bản phát hành mới" />
+        <TopButton
+          icon={FiMusic}
+          label="Bản phát hành mới"
+          onClick={() => handleNavigation("/explore/released")}
+        />
         <TopButton
           icon={FiTrendingUp}
           label="Bảng xếp hạng"
-          onClick={() => handleNavigation("/explore/charts/playlist")}
+          onClick={() => handleNavigation("/explore/charts")}
         />
         <TopButton icon={FiSmile} label="Tâm trạng và thể loại" />
       </div>
@@ -175,7 +179,7 @@ function Explore() {
             800
           );
         }}
-        className={`flex gap-4 overflow-x-auto ${
+        className={`flex gap-4 overflow-x-auto custom-scrollbar ${
           albumsScrolling ? "" : "no-scrollbar"
         } pb-2`}
       >
@@ -236,7 +240,7 @@ function Explore() {
               800
             );
           }}
-          className={`flex gap-3 overflow-x-auto ${
+          className={`flex gap-3 overflow-x-auto custom-scrollbar ${
             // Giảm gap
             categoriesScrolling ? "" : "no-scrollbar"
           } pb-2`}
@@ -305,7 +309,7 @@ function Explore() {
             800
           );
         }}
-        className={`flex gap-4 overflow-x-auto ${
+        className={`flex gap-4 overflow-x-auto custom-scrollbar ${
           videosScrolling ? "" : "no-scrollbar"
         } pb-2`}
       >

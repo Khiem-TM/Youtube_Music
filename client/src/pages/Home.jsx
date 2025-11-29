@@ -12,14 +12,15 @@ function Home() {
   const [moods, setMoods] = useState([]);
   const [selectedMoodSlug, setSelectedMoodSlug] = useState(null);
   const [quickPicks, setQuickPicks] = useState([]);
-  // public items
   const [homeAlbums, setHomeAlbums] = useState([]);
   const [todaysHits, setTodaysHits] = useState([]);
+  const moodsRef = useRef(null);
   const albumsRef = useRef(null);
   const hitsRef = useRef(null);
+  const moodsScrollTimer = useRef(null);
   const albumsScrollTimer = useRef(null);
   const hitsScrollTimer = useRef(null);
-  // public items scroll
+  const [moodsScrolling, setMoodsScrolling] = useState(false);
   const [albumsScrolling, setAlbumsScrolling] = useState(false);
   const [hitsScrolling, setHitsScrolling] = useState(false);
 
@@ -96,7 +97,15 @@ function Home() {
     <div className="w-full">
       {/* moods list */}
       <div className="max-w-[1400px] mx-auto px-6">
-        <div className="flex gap-3 overflow-x-auto no-scrollbar py-4">
+        <div
+          ref={moodsRef}
+          onScroll={() => {
+            setMoodsScrolling(true);
+            if (moodsScrollTimer.current) clearTimeout(moodsScrollTimer.current);
+            moodsScrollTimer.current = setTimeout(() => setMoodsScrolling(false), 800);
+          }}
+          className={`flex gap-3 overflow-x-auto custom-scrollbar ${moodsScrolling ? "" : "no-scrollbar"} py-4`}
+        >
           {moods.map((mood) => (
             <div
               key={mood._id || mood.id || mood.slug}
@@ -157,7 +166,7 @@ function Home() {
                 800
               );
             }}
-            className={`flex gap-4 overflow-x-auto ${
+            className={`flex gap-4 overflow-x-auto custom-scrollbar ${
               albumsScrolling ? "" : "no-scrollbar"
             } pb-2`}
           >
@@ -206,7 +215,7 @@ function Home() {
                 800
               );
             }}
-            className={`flex gap-6 overflow-x-auto ${
+            className={`flex gap-6 overflow-x-auto custom-scrollbar ${
               hitsScrolling ? "" : "no-scrollbar"
             } pb-2`}
           >
@@ -233,43 +242,7 @@ function Home() {
         </div>
       )}
 
-      {selectedMoodSlug && (
-        <div className="max-w-[1400px] mx-auto px-6 mt-6">
-          <h2 className="text-2xl font-bold text-white mb-4">Quick picks</h2>
-          {quickPicks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {quickPicks.map((item) => (
-                <div
-                  key={item._id || item.id || item.slug}
-                  className="flex items-center gap-3 bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] rounded-lg p-3"
-                >
-                  <img
-                    src={
-                      (Array.isArray(item.thumbnails)
-                        ? item.thumbnails[0]
-                        : item.thumbnailUrl) || ""
-                    }
-                    alt={item.title}
-                    className="w-10 h-10 rounded object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="text-white text-sm font-semibold truncate">
-                      {item.title}
-                    </div>
-                    <div className="text-neutral-400 text-xs truncate">
-                      {Array.isArray(item.artists)
-                        ? item.artists.join(", ")
-                        : item.artist || ""}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-neutral-400">Không có</p>
-          )}
-        </div>
-      )}
+      
     </div>
   );
 }
