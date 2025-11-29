@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Menu, Play } from "lucide-react";
 
-function Home1Card({ data }) {
+function Home1Card({ data, onClick, onPlay }) {
   const [isHovered, setIsHovered] = useState(false);
 
   const cardClasses =
@@ -13,13 +13,13 @@ function Home1Card({ data }) {
   // logic for menu
   const handleMenuClick = (e) => {
     e.stopPropagation();
-    alert(`Mở tùy chọn cho: ${data.title}`);
+    // menu action (optional)
   };
 
   // logic 4 play
   const handlePlayClick = (e) => {
     e.stopPropagation();
-    alert(`Phát: ${data.title}`);
+    onPlay && onPlay();
   };
 
   const thumbnailUrl = Array.isArray(data.thumbnails)
@@ -34,6 +34,7 @@ function Home1Card({ data }) {
       className={cardClasses}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-lg">
         <img

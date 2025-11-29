@@ -125,10 +125,8 @@ const Header = ({ onToggleSidebar }) => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Redirect to search results page or handle search
       console.log("Search for:", searchQuery);
       setShowSuggestions(false);
-      // You can navigate to search results page here
     }
   };
   return (
@@ -227,7 +225,9 @@ const Header = ({ onToggleSidebar }) => {
         {(showSuggestions || showResults || isSearching || resultsLoading) && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
             {(isSearching || resultsLoading) && (
-              <div className="p-2 text-center text-gray-400 text-sm">Đang tìm kiếm...</div>
+              <div className="p-2 text-center text-gray-400 text-sm">
+                Đang tìm kiếm...
+              </div>
             )}
             {showSuggestions && searchSuggestions.length > 0 && (
               <div className="py-1">
@@ -268,8 +268,14 @@ const Header = ({ onToggleSidebar }) => {
                         className="w-8 h-8 rounded object-cover"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm text-white truncate">{item.title || item.name || "(không có tiêu đề)"}</div>
-                        <div className="text-xs text-gray-400 truncate">{(Array.isArray(item.artists) ? item.artists.join(", ") : item.artist || item.creator || "")}</div>
+                        <div className="text-sm text-white truncate">
+                          {item.title || item.name || "(không có tiêu đề)"}
+                        </div>
+                        <div className="text-xs text-gray-400 truncate">
+                          {Array.isArray(item.artists)
+                            ? item.artists.join(", ")
+                            : item.artist || item.creator || ""}
+                        </div>
                       </div>
                     </div>
                   </div>

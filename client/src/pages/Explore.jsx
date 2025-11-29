@@ -136,7 +136,11 @@ function Explore() {
           label="Bảng xếp hạng"
           onClick={() => handleNavigation("/explore/charts")}
         />
-        <TopButton icon={FiSmile} label="Tâm trạng và thể loại" />
+        <TopButton
+          icon={FiSmile}
+          label="Tâm trạng và thể loại"
+          onClick={() => handleNavigation("/explore/moreGenre")}
+        />
       </div>
 
       {/* new albúms */}

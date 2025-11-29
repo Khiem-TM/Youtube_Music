@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function Home3Card({ data }) {
+function Home3Card({ data, onClick, onPlay }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -8,6 +8,7 @@ function Home3Card({ data }) {
       className="flex items-center p-2 rounded-lg cursor-pointer transition-colors duration-200"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
     >
       <div className="flex items-center justify-center w-[80px] h-[50px] mr-4 flex-shrink-0 relative">
         <img
