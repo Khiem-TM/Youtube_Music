@@ -47,6 +47,7 @@ function Layout({ children }) {
                   (Array.isArray(player.track?.thumbnails)
                     ? player.track.thumbnails[0]
                     : player.track?.thumbnailUrl || player.track?.thumb) || "",
+                audioUrl: player.track?.audioUrl || "",
                 views: player.track?.views || 0,
                 likes: player.track?.likes || 0,
               },
