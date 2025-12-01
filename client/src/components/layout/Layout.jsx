@@ -38,6 +38,9 @@ function Layout({ children }) {
               isPlaying: player.isPlaying,
               currentTime: player.currentTime,
               duration: player.duration,
+              repeatMode: player.repeatMode,
+              shuffle: player.shuffle,
+              volume: player.volume,
               track: {
                 title: player.track?.title || player.track?.name || "",
                 artist: Array.isArray(player.track?.artists)
@@ -55,6 +58,9 @@ function Layout({ children }) {
             onPrev={actions.prev}
             onNext={actions.next}
             onPlayPause={actions.togglePlay}
+            onSetVolume={actions.setVolume}
+            onCycleRepeat={actions.cycleRepeat}
+            onToggleShuffle={actions.toggleShuffle}
           />
         </div>
       )}

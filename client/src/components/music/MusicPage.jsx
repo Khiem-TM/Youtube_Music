@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePlayer } from "../../contexts/PlayerContext";
 
 // chuyển định dạng time
 const formatDuration = (seconds) => {
@@ -9,12 +10,17 @@ const formatDuration = (seconds) => {
 
 export default function MusicPlayerForm({ currentTrack }) {
   const [activeTab, setActiveTab] = useState("RELATED");
+  const { actions } = usePlayer();
   const thumb = Array.isArray(currentTrack?.thumbnails)
     ? currentTrack.thumbnails[0]
     : currentTrack?.thumbnailUrl || "";
-  const related = Array.isArray(currentTrack?.album?.tracks)
+  const albumTracks = Array.isArray(currentTrack?.album?.tracks)
     ? currentTrack.album.tracks
     : [];
+  const playlists = Array.isArray(currentTrack?.playlists)
+    ? currentTrack.playlists
+    : [];
+  const songName = currentTrack.title;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -28,6 +34,9 @@ export default function MusicPlayerForm({ currentTrack }) {
                 alt={currentTrack?.title || ""}
                 className="w-full h-full object-cover rounded-lg shadow-2xl"
               />
+              <h2 className="text-2xl font-semibold text-center mt-4 tracking-wide">
+                {songName}
+              </h2>
             </div>
           </div>
 
@@ -55,14 +64,24 @@ export default function MusicPlayerForm({ currentTrack }) {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto pr-4 max-h-[700px] custom-scrollbar">
-              {activeTab === "RELATED" && (
+              {activeTab === "UP NEXT" && (
                 <div className="space-y-1">
-                  {related.length === 0 && (
-                    <div className="text-gray-400 text-center py-12">Không có bài hát liên quan</div>
+                  {albumTracks.length === 0 && (
+                    <div className="text-gray-400 text-center py-12">Không có bài trong album</div>
                   )}
-                  {related.map((track) => (
+                  {albumTracks.map((track) => (
                     <div
                       key={track.id}
+                      onClick={() =>
+                        actions.playTrack({
+                          ...track,
+                          type: "song",
+                          title: track.title,
+                          audioUrl: track.audioUrl,
+                          thumbnails: track.thumbnails,
+                          artist: track.artist,
+                        })
+                      }
                       className="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
                       <div className="w-12 h-12 flex-shrink-0">
@@ -72,20 +91,64 @@ export default function MusicPlayerForm({ currentTrack }) {
                           className="w-full h-full object-cover rounded"
                         />
                       </div>
-
                       <div className="flex-1 min-w-0">
-                        <div className="text-white font-medium truncate group-hover:text-blue-400 transition-colors">
-                          {track.title}
-                        </div>
+                        <div className="text-white font-medium truncate group-hover:text-blue-400 transition-colors">{track.title}</div>
                         {track.artist && (
-                          <div className="text-gray-400 text-sm truncate">
-                            {track.artist}
-                          </div>
+                          <div className="text-gray-400 text-sm truncate">{track.artist}</div>
                         )}
                       </div>
+                      <div className="text-gray-400 text-sm flex-shrink-0">{formatDuration(track.duration || 0)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-                      <div className="text-gray-400 text-sm flex-shrink-0">
-                        {formatDuration(track.duration)}
+              {activeTab === "RELATED" && (
+                <div className="space-y-6">
+                  {playlists.length === 0 && (
+                    <div className="text-gray-400 text-center py-12">Không có danh sách phát liên quan</div>
+                  )}
+                  {playlists.map((pl, idx) => (
+                    <div key={pl.id || pl.slug || idx}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <img
+                          src={(Array.isArray(pl.thumbnails) ? pl.thumbnails[0] : pl.thumbnailUrl || "")}
+                          alt={pl.title}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                        <div className="text-white font-semibold truncate">{pl.title}</div>
+                      </div>
+                      <div className="space-y-1">
+                        {(Array.isArray(pl.tracks) ? pl.tracks : []).map((track) => (
+                          <div
+                            key={track.id}
+                            onClick={() =>
+                              actions.playTrack({
+                                ...track,
+                                type: "song",
+                                title: track.title,
+                                audioUrl: track.audioUrl,
+                                thumbnails: track.thumbnails,
+                              })
+                            }
+                            className="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                          >
+                            <div className="w-12 h-12 flex-shrink-0">
+                              <img
+                                src={(Array.isArray(track.thumbnails) ? track.thumbnails[0] : track.thumbnailUrl || "")}
+                                alt={track.title}
+                                className="w-full h-full object-cover rounded"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white font-medium truncate group-hover:text-blue-400 transition-colors">{track.title}</div>
+                              {track.artist && (
+                                <div className="text-gray-400 text-sm truncate">{track.artist}</div>
+                              )}
+                            </div>
+                            <div className="text-gray-400 text-sm flex-shrink-0">{formatDuration(track.duration || 0)}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -93,18 +156,12 @@ export default function MusicPlayerForm({ currentTrack }) {
               )}
 
               {/* UP NEXT tab */}
-              {activeTab === "UP NEXT" && (
-                <div className="text-gray-400 text-center py-12">
-                  No upcoming tracks
-                </div>
+              {activeTab === "LYRICS" && (
+                <div className="text-gray-400 text-center py-12">Lyrics not available</div>
               )}
 
               {/* Không có trong server */}
-              {activeTab === "LYRICS" && (
-                <div className="text-gray-400 text-center py-12">
-                  Lyrics not available
-                </div>
-              )}
+              {activeTab === "UP NEXT" && null}
             </div>
           </div>
         </div>

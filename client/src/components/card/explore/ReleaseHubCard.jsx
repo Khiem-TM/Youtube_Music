@@ -16,9 +16,7 @@ const ReleaseHubCard = ({ data }) => {
       className="block w-[230px] rounded-lg overflow-hidden bg-black text-white 
                  shadow-lg hover:scale-[1.02] transition-transform duration-300"
     >
-      {/* --- TOP IMAGE AREA --- */}
       <div className="relative flex w-full h-[140px] bg-[#1a1a1a]">
-        {/* LEFT IMAGE */}
         <div className="relative w-[75%] h-full">
           <img
             src={imageUrl}
@@ -26,7 +24,6 @@ const ReleaseHubCard = ({ data }) => {
             className="w-full h-full object-cover"
           />
 
-          {/* Play Button */}
           <div
             className="absolute top-2 left-2 w-6 h-6 rounded-full border border-white 
                           flex items-center justify-center bg-black/40"
@@ -34,7 +31,6 @@ const ReleaseHubCard = ({ data }) => {
             <span className="text-white text-[10px]">▶</span>
           </div>
 
-          {/* Artist Label Inside Image */}
           <div className="absolute bottom-2 left-2 right-2">
             <p className="text-xs font-medium px-2 py-1 bg-black/40 rounded">
               {sub}
@@ -42,7 +38,6 @@ const ReleaseHubCard = ({ data }) => {
           </div>
         </div>
 
-        {/* RIGHT VERTICAL TEXT (RELEASED) */}
         <div className="w-[25%] flex items-center justify-center bg-white">
           <p
             className="text-black font-bold tracking-widest text-[14px]"

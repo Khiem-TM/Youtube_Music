@@ -27,14 +27,24 @@ function MusicPlayer({
   onPrev,
   onNext,
   onPlayPause,
+  onSetVolume,
+  onCycleRepeat,
+  onToggleShuffle,
 }) {
   const [localPlayer, setLocalPlayer] = useState(player);
   const audioRef = useRef(null);
+  const [volume, setVolume] = useState(1);
+  const [repeatLabel, setRepeatLabel] = useState("none");
+  const [shuffleActive, setShuffleActive] = useState(false);
 
   const isPlaying = localPlayer.isPlaying;
   const currentTime = localPlayer.currentTime;
   const duration = localPlayer.duration;
   const track = localPlayer.track || {};
+  const sanitize = (u) => (typeof u === "string" ? u.replace(/[`]/g, "").trim() : u || "");
+  const cover = Array.isArray(track.thumbnails)
+    ? sanitize(track.thumbnails[0])
+    : sanitize(track.thumbnailUrl || track.thumb || "");
 
   const togglePlay = () => {
     const next = { ...localPlayer, isPlaying: !isPlaying };
@@ -67,18 +77,22 @@ function MusicPlayer({
 
   useEffect(() => {
     setLocalPlayer(player);
+    setRepeatLabel(player.repeatMode || "none");
+    setShuffleActive(!!player.shuffle);
+    setVolume(typeof player.volume === "number" ? player.volume : 1);
   }, [player]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.src = track.audioUrl || "";
+    audio.src = sanitize(track.audioUrl || "");
+    audio.volume = volume;
     if (track.audioUrl && isPlaying) {
       audio.play().catch(() => {});
     } else {
       audio.pause();
     }
-  }, [track.audioUrl, isPlaying]);
+  }, [track.audioUrl, isPlaying, volume]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -91,9 +105,12 @@ function MusicPlayer({
     };
     audio.addEventListener("timeupdate", hTime);
     audio.addEventListener("loadedmetadata", hMeta);
+    const hEnded = () => { onNext && onNext(); };
+    audio.addEventListener("ended", hEnded);
     return () => {
       audio.removeEventListener("timeupdate", hTime);
       audio.removeEventListener("loadedmetadata", hMeta);
+      audio.removeEventListener("ended", hEnded);
     };
   }, []);
 
@@ -136,7 +153,7 @@ function MusicPlayer({
 
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <img
-              src={track.thumbnailUrl || "/placeholder-cover.jpg"}
+              src={cover || "/placeholder-cover.jpg"}
               alt="cover"
               className="w-9 h-9 rounded object-cover"
             />
@@ -152,10 +169,51 @@ function MusicPlayer({
           </div>
 
           <div className="flex items-center gap-3">
-            <FiVolume2 className="w-5 h-5 text-gray-300" />
-            <FiRepeat className="w-5 h-5 text-gray-300" />
-            <FiShuffle className="w-5 h-5 text-gray-300" />
-            <FiMoreVertical className="w-5 h-5 text-gray-300" />
+            <div className="flex items-center gap-2">
+              <FiVolume2 className="w-5 h-5 text-gray-300" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setVolume(v);
+                  const a = audioRef.current; if (a) a.volume = v;
+                  onSetVolume && onSetVolume(v);
+                }}
+                className="w-24"
+              />
+            </div>
+            <button
+              className={`p-2 rounded ${repeatLabel !== "none" ? "bg-white/10" : ""}`}
+              title={`repeat: ${repeatLabel}`}
+              onClick={() => { onCycleRepeat && onCycleRepeat(); }}
+            >
+              <FiRepeat className="w-5 h-5 text-gray-300" />
+            </button>
+            <button
+              className={`p-2 rounded ${shuffleActive ? "bg-white/10" : ""}`}
+              title={shuffleActive ? "Shuffle on" : "Shuffle off"}
+              onClick={() => { onToggleShuffle && onToggleShuffle(); }}
+            >
+              <FiShuffle className="w-5 h-5 text-gray-300" />
+            </button>
+            <button
+              className="p-2"
+              onClick={() => {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  const evt = new CustomEvent("open-auth-modal", { detail: { mode: "login" } });
+                  window.dispatchEvent(evt);
+                  return;
+                }
+                alert("Thêm vào playlist của tôi (demo)");
+              }}
+            >
+              <FiMoreVertical className="w-5 h-5 text-gray-300" />
+            </button>
           </div>
         </div>
       </div>

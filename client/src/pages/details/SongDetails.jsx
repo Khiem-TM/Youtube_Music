@@ -69,20 +69,13 @@ export default function SongDetails() {
                 : data.thumbnailUrl || data.thumb) || "",
             ].filter(Boolean),
             album: {
-              tracks: related.map((s) => ({
-                id: s._id || s.id || s.slug,
-                title: s.title || s.name,
-                thumbnails: [
-                  (Array.isArray(s.thumbnails)
-                    ? s.thumbnails[0]
-                    : s.thumbnailUrl || s.thumb) || "",
-                ].filter(Boolean),
-                artist: Array.isArray(s.artists)
-                  ? s.artists.join(", ")
-                  : s.artist || "",
-                duration: s.duration || 0,
-              })),
+              tracks: Array.isArray(data.album?.tracks)
+                ? data.album.tracks
+                : [],
             },
+            playlists: Array.isArray(data.playlists)
+              ? data.playlists
+              : [],
           }}
         />
       )}
