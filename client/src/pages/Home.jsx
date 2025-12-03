@@ -17,24 +17,23 @@ function Home() {
   const [quickPicks, setQuickPicks] = useState([]);
   const [homeAlbums, setHomeAlbums] = useState([]);
   const [todaysHits, setTodaysHits] = useState([]);
-  const [countryCode, setCountryCode] = useState("GLOBAL");
-  const [countryPlaylists, setCountryPlaylists] = useState([]);
+  
   const [personalized, setPersonalized] = useState([]);
   const { token } = useAuth();
   const moodsRef = useRef(null);
   const albumsRef = useRef(null);
   const hitsRef = useRef(null);
-  const countryRef = useRef(null);
+  
   const personalizedRef = useRef(null);
   const moodsScrollTimer = useRef(null);
   const albumsScrollTimer = useRef(null);
   const hitsScrollTimer = useRef(null);
-  const countryScrollTimer = useRef(null);
+  
   const personalizedScrollTimer = useRef(null);
   const [moodsScrolling, setMoodsScrolling] = useState(false);
   const [albumsScrolling, setAlbumsScrolling] = useState(false);
   const [hitsScrolling, setHitsScrolling] = useState(false);
-  const [countryScrolling, setCountryScrolling] = useState(false);
+  
   const [personalizedScrolling, setPersonalizedScrolling] = useState(false);
   const navigate = useNavigate();
   const { actions } = usePlayer();
@@ -82,25 +81,7 @@ function Home() {
     fetchHomeSections();
   }, []);
 
-  useEffect(() => {
-    const fetchByCountry = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/playlists/by-country`, {
-          params: { country: countryCode, limit: 12 },
-        });
-        const items = Array.isArray(res.data) ? res.data : res.data?.items || [];
-        setCountryPlaylists(items);
-      } catch (e) {
-        setCountryPlaylists([]);
-      }
-    };
-    fetchByCountry();
-  }, [countryCode]);
-
-  // reset scroll and ensure fresh render when country playlists change
-  useEffect(() => {
-    try { countryRef.current && (countryRef.current.scrollLeft = 0); } catch (_) {}
-  }, [countryPlaylists]);
+  
 
   useEffect(() => {
     const fetchPersonalized = async () => {
@@ -326,59 +307,7 @@ function Home() {
             })()}
           </div>
 
-          {/* country playlists */}
-          <div className="flex items-center justify-between mt-8 mb-4">
-            <h2 className="text-3xl font-bold text-white">Playlists by country</h2>
-            <div className="flex items-center gap-2">
-              <button
-                className={`px-3 h-9 rounded-full border border-gray-700 ${countryCode === "GLOBAL" ? "bg-white text-black" : "bg-[rgba(255,255,255,0.15)] text-white hover:bg-[rgba(255,255,255,0.25)]"}`}
-                onClick={() => setCountryCode("GLOBAL")}
-              >
-                Global
-              </button>
-              <button
-                className={`px-3 h-9 rounded-full border border-gray-700 ${countryCode === "VN" ? "bg-white text-black" : "bg-[rgba(255,255,255,0.15)] text-white hover:bg-[rgba(255,255,255,0.25)]"}`}
-                onClick={() => setCountryCode("VN")}
-              >
-                Vietnam
-              </button>
-              <button
-                className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] flex items-center justify-center text-white"
-                onClick={() => countryRef.current?.scrollBy({ left: -600, behavior: "smooth" })}
-              >
-                <FiChevronLeft />
-              </button>
-              <button
-                className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] flex items-center justify-center text-white"
-                onClick={() => countryRef.current?.scrollBy({ left: 600, behavior: "smooth" })}
-              >
-                <FiChevronRight />
-              </button>
-            </div>
-          </div>
-          <div
-            ref={countryRef}
-            onScroll={() => {
-              setCountryScrolling(true);
-              if (countryScrollTimer.current) clearTimeout(countryScrollTimer.current);
-              countryScrollTimer.current = setTimeout(() => setCountryScrolling(false), 800);
-            }}
-            className={`flex gap-4 overflow-x-auto custom-scrollbar ${countryScrolling ? "" : "no-scrollbar"} pb-2`}
-          >
-            {countryPlaylists.map((item) => (
-              <div key={item._id || item.id || item.slug} className="min-w-[300px]" onClick={() => {
-                const idOrSlug = item.slug || item.id || item._id;
-                if (idOrSlug) navigate(`/playlists/details/${idOrSlug}`);
-                handlePlayEvent({ ...item, type: "playlist" });
-              }}>
-                <Home3Card data={{
-                  title: item.title || item.name,
-                  thumbnails: Array.isArray(item.thumbnails) ? item.thumbnails[0] : item.thumbnailUrl || item.thumb,
-                  artists: Array.isArray(item.artists) ? item.artists.join(", ") : item.artist || "",
-                }} />
-              </div>
-            ))}
-          </div>
+          
 
           {/* personalized */}
           {token && personalized.length > 0 && (

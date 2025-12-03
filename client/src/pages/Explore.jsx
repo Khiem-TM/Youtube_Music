@@ -109,7 +109,7 @@ function Explore() {
   // config Category Card
   const CategoryCard = ({ item }) => (
     <Link
-      to={`/explore/${item.slug}`}
+      to={`/explore/moreGenre/category/${item.slug}`}
       className="flex items-center h-12 px-4 rounded-xl bg-[#2b2b2b] hover:bg-[#3a3a3a] border border-gray-700 text-white min-w-[200px]"
     >
       <span
@@ -202,7 +202,7 @@ function Explore() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-bold">Tâm trạng và thể loại</h2>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1 rounded-lg bg-[#2b2b2b] hover:bg-[#3a3a3a] border border-gray-700 text-sm">
+            <button className="px-3 py-1 rounded-lg bg-[#2b2b2b] hover:bg-[#3a3a3a] border border-gray-700 text-sm" onClick={() => navigate('/explore/moreGenre')}>
               More
             </button>
             <button

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   FiPlay,
   FiPause,
@@ -46,11 +46,13 @@ function MusicPlayer({
   const duration = localPlayer.duration;
   const track = localPlayer.track || {};
   const sanitize = (u) => (typeof u === "string" ? u.replace(/[`]/g, "").trim() : u || "");
-  const cover = Array.isArray(track.thumbnails)
-    ? sanitize(track.thumbnails[0])
-    : sanitize(track.thumbnailUrl || track.thumb || "");
+  const cover = useMemo(() => {
+    if (Array.isArray(track.thumbnails)) return sanitize(track.thumbnails[0]);
+    if (typeof track.thumbnails === 'string') return sanitize(track.thumbnails);
+    return sanitize(track.thumbnailUrl || track.thumb || "");
+  }, [track.thumbnails, track.thumbnailUrl, track.thumb]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const next = { ...localPlayer, isPlaying: !isPlaying };
     setLocalPlayer(next);
     onPlayPause && onPlayPause(next.isPlaying);
@@ -61,7 +63,7 @@ function MusicPlayer({
     } else {
       audio.pause();
     }
-  };
+  }, [localPlayer, isPlaying, onPlayPause]);
 
   const formatTime = (seconds) => {
     if (!seconds || Number.isNaN(seconds)) return "0:00";
@@ -78,6 +80,9 @@ function MusicPlayer({
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progressRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const [loadingTrack, setLoadingTrack] = useState(false);
 
   useEffect(() => {
     setLocalPlayer(player);
@@ -109,6 +114,7 @@ function MusicPlayer({
     const audio = audioRef.current;
     if (!audio) return;
     audio.src = sanitize(track.audioUrl || "");
+    if (track.audioUrl) setLoadingTrack(true);
   }, [track.audioUrl]);
 
   // control playback on isPlaying toggle without resetting src
@@ -132,11 +138,17 @@ function MusicPlayer({
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    const last = { t: 0 };
     const hTime = () => {
-      setLocalPlayer((prev) => ({ ...prev, currentTime: audio.currentTime }));
+      const now = performance.now();
+      if (now - last.t > 120) {
+        last.t = now;
+        setLocalPlayer((prev) => ({ ...prev, currentTime: audio.currentTime }));
+      }
     };
     const hMeta = () => {
       setLocalPlayer((prev) => ({ ...prev, duration: audio.duration }));
+      setLoadingTrack(false);
     };
     audio.addEventListener("timeupdate", hTime);
     audio.addEventListener("loadedmetadata", hMeta);
@@ -149,14 +161,36 @@ function MusicPlayer({
     };
   }, []);
 
+  const setSeekFromClientX = (clientX) => {
+    const el = progressRef.current;
+    const audio = audioRef.current;
+    if (!el || !audio || !duration) return;
+    const rect = el.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const nextTime = ratio * duration;
+    audio.currentTime = nextTime;
+    setLocalPlayer((prev) => ({ ...prev, currentTime: nextTime }));
+  };
+
   return (
     <div className="px-4 py-2">
       <audio ref={audioRef} />
       <div className="relative">
-        <div
-          className="absolute top-0 left-0 h-[2px] bg-primary-500"
-          style={{ width: `${progressPercentage}%` }}
-        />
+        <div className="mb-3">
+          <div
+            ref={progressRef}
+            className="w-full h-[6px] md:h-[8px] bg-white/10 rounded cursor-pointer"
+            onMouseDown={(e) => { setDragging(true); setSeekFromClientX(e.clientX); }}
+            onMouseUp={() => setDragging(false)}
+            onMouseLeave={() => setDragging(false)}
+            onMouseMove={(e) => { if (dragging) setSeekFromClientX(e.clientX); }}
+            onClick={(e) => { setSeekFromClientX(e.clientX); }}
+            onTouchStart={(e) => { const t = e.touches[0]; setSeekFromClientX(t.clientX); }}
+            onTouchMove={(e) => { const t = e.touches[0]; setSeekFromClientX(t.clientX); }}
+          >
+            <div className="h-full bg-primary-500 rounded" style={{ width: `${progressPercentage}%` }} />
+          </div>
+        </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <button
@@ -206,6 +240,9 @@ function MusicPlayer({
                 {formatCount(track.likes)} likes
               </div>
             </div>
+            {loadingTrack && (
+              <span className="ml-2 text-xs text-gray-400">Đang chuyển…</span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
