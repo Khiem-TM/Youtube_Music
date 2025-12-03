@@ -16,6 +16,7 @@ const initialState = {
   volume: 1,
   repeatMode: "none", // none | all | one
   shuffle: false,
+  likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
 };
 
 function reducer(state, action) {
@@ -83,6 +84,18 @@ function reducer(state, action) {
     }
     case "TOGGLE_SHUFFLE":
       return { ...state, shuffle: !state.shuffle };
+    case "LIKE_ADD": {
+      const refId = action.payload;
+      const next = Array.from(new Set([...(state.likedIds || []), refId]));
+      localStorage.setItem('likedIds', JSON.stringify(next));
+      return { ...state, likedIds: next };
+    }
+    case "LIKE_REMOVE": {
+      const refId = action.payload;
+      const next = (state.likedIds || []).filter((x) => x !== refId);
+      localStorage.setItem('likedIds', JSON.stringify(next));
+      return { ...state, likedIds: next };
+    }
     default:
       return state;
   }
@@ -120,7 +133,29 @@ export function PlayerProvider({ children }) {
     setVolume: (v) => dispatch({ type: "SET_VOLUME", payload: v }),
     cycleRepeat: () => dispatch({ type: "CYCLE_REPEAT" }),
     toggleShuffle: () => dispatch({ type: "TOGGLE_SHUFFLE" }),
-  }), []);
+    isLiked: (refId) => (state.likedIds || []).includes(refId),
+    toggleLike: async (refId, type = 'song') => {
+      if (!refId) return;
+      const liked = (state.likedIds || []).includes(refId)
+      try {
+        if (!liked) {
+          dispatch({ type: 'LIKE_ADD', payload: refId })
+          const svc = (await import('../services/localPlaylistService.js')).default
+          await svc.addFavorite(refId, type)
+          console.log('[like] add', refId)
+        } else {
+          dispatch({ type: 'LIKE_REMOVE', payload: refId })
+          const svc = (await import('../services/localPlaylistService.js')).default
+          await svc.removeFavorite(refId)
+          console.log('[like] remove', refId)
+        }
+      } catch (e) {
+        console.warn('toggleLike failed, reverting', e)
+        if (!liked) dispatch({ type: 'LIKE_REMOVE', payload: refId })
+        else dispatch({ type: 'LIKE_ADD', payload: refId })
+      }
+    },
+  }), [state.likedIds]);
 
   return (
     <PlayerContext.Provider value={{ state, actions }}>

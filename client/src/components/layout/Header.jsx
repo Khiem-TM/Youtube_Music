@@ -15,6 +15,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import searchService from "../../services/searchService";
+import localAuthService from "../../services/localAuthService";
 const Header = ({ onToggleSidebar }) => {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -26,6 +27,7 @@ const Header = ({ onToggleSidebar }) => {
     password: "",
     confirmPassword: "",
   });
+  const [optInLocalRegister, setOptInLocalRegister] = useState(true);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: "", email: "" });
@@ -540,6 +542,19 @@ const Header = ({ onToggleSidebar }) => {
                   />
                 </div>
               )}
+              {!isLogin && (
+                <div className="mb-4 flex items-center gap-2">
+                  <input
+                    id="optin-local"
+                    type="checkbox"
+                    checked={optInLocalRegister}
+                    onChange={(e) => setOptInLocalRegister(e.target.checked)}
+                  />
+                  <label htmlFor="optin-local" className="text-sm text-gray-300">
+                    Lưu Playlist local (Express + MongoDB)
+                  </label>
+                </div>
+              )}
 
               {error && (
                 <div className="text-red-400 text-sm mb-3 text-center">
@@ -558,6 +573,14 @@ const Header = ({ onToggleSidebar }) => {
                         password: authData.password,
                         confirmPassword: authData.confirmPassword,
                       });
+                      if (optInLocalRegister) {
+                        try {
+                          const r = await localAuthService.register({ email: authData.email, password: authData.password, optInLocal: true })
+                          if (r?.token) localStorage.setItem('localToken', r.token)
+                        } catch (e) {
+                          console.warn('Local opt-in failed:', e)
+                        }
+                      }
                     }
                     setAuthModalOpen(false);
                     setAuthData({
@@ -647,6 +670,47 @@ const Header = ({ onToggleSidebar }) => {
               >
                 Lưu thay đổi
               </button>
+
+              <div className="mt-6 border-t border-gray-700 pt-4">
+                <h3 className="text-lg font-semibold mb-3">Playlist local</h3>
+                <p className="text-xs text-gray-400 mb-2">Bật lưu playlist vào DB local (Express + MongoDB)</p>
+                <div className="mb-3">
+                  <label className="block text-sm text-gray-400 mb-2">Mật khẩu local (dùng để kích hoạt)</label>
+                  <input
+                    type="password"
+                    onChange={(e) => setPasswordForm({ ...passwordForm, localPassword: e.target.value })}
+                    className="w-full bg-dark-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                    placeholder="Nhập mật khẩu"
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const pwd = passwordForm.localPassword || ''
+                      const email = profileForm.email || user?.email
+                      const r = await localAuthService.register({ email, password: pwd || '12345678', optInLocal: true })
+                      if (r?.token) {
+                        localStorage.setItem('localToken', r.token)
+                        alert('Đã bật Playlist local')
+                      }
+                    } catch (e) {
+                      try {
+                        const email = profileForm.email || user?.email
+                        const r2 = await localAuthService.login({ email, password: passwordForm.localPassword || '12345678' })
+                        if (r2?.token) {
+                          localStorage.setItem('localToken', r2.token)
+                          alert('Đã bật Playlist local')
+                        }
+                      } catch (err) {
+                        alert('Không thể bật Playlist local')
+                      }
+                    }
+                  }}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg"
+                >
+                  Kích hoạt
+                </button>
+              </div>
             </div>
           </div>
         </>

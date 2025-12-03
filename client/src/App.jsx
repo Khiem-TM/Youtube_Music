@@ -15,6 +15,7 @@ import AlbumDetails from "./pages/details/AlbumDetails";
 import VideoDetails from "./pages/details/VideoDetails";
 import SongDetails from "./pages/details/SongDetails";
 import { PlayerProvider } from "./contexts/PlayerContext";
+import MyPlaylist from "./pages/MyPlaylist";
 import CateDetail from "./pages/explorePage/moreGenreDetail/CateDetail.jsx";
 import LineDetail from "./pages/explorePage/moreGenreDetail/LineDetail.jsx";
 
@@ -45,6 +46,7 @@ function App() {
             <Route path="/albums/details/:slug" element={<AlbumDetails />} />
             <Route path="/videos/details/:id" element={<VideoDetails />} />
             <Route path="/songs/details/:id" element={<SongDetails />} />
+            <Route path="/my-playlists/:id" element={<MyPlaylist />} />
           </Routes>
           </Layout>
         </Router>

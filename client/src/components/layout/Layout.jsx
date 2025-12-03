@@ -3,6 +3,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import MusicPlayer from "../player/MusicPlayer";
 import { usePlayer } from "../../contexts/PlayerContext";
+import PlaylistPicker from "../playlist/PlaylistPicker";
 
 function Layout({ children }) {
   // Khởi tạo trạng thái tĩnh - cục bộ --> đồng thời xét tt sidebar
@@ -64,6 +65,7 @@ function Layout({ children }) {
           />
         </div>
       )}
+      <PlaylistPicker />
     </div>
   );
 }

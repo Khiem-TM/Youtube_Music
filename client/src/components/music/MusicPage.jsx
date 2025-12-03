@@ -8,7 +8,7 @@ const formatDuration = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
-export default function MusicPlayerForm({ currentTrack }) {
+export default function MusicPlayerForm({ currentTrack, onSelectTrack }) {
   const [activeTab, setActiveTab] = useState("RELATED");
   const { actions } = usePlayer();
   const thumb = Array.isArray(currentTrack?.thumbnails)
@@ -72,7 +72,7 @@ export default function MusicPlayerForm({ currentTrack }) {
                   {albumTracks.map((track) => (
                     <div
                       key={track.id}
-                      onClick={() =>
+                      onClick={() => {
                         actions.playTrack({
                           ...track,
                           type: "song",
@@ -80,9 +80,10 @@ export default function MusicPlayerForm({ currentTrack }) {
                           audioUrl: track.audioUrl,
                           thumbnails: track.thumbnails,
                           artist: track.artist,
-                        })
-                      }
-                      className="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                        });
+                        onSelectTrack && onSelectTrack(track);
+                      }}
+                      className="group relative flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
                       <div className="w-12 h-12 flex-shrink-0">
                         <img
@@ -98,6 +99,13 @@ export default function MusicPlayerForm({ currentTrack }) {
                         )}
                       </div>
                       <div className="text-gray-400 text-sm flex-shrink-0">{formatDuration(track.duration || 0)}</div>
+                      <a
+                        href={`/songs/details/${track.id || ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-2 hidden group-hover:block px-3 py-1 text-xs rounded bg-white/10 hover:bg-white/20"
+                      >
+                        Detail
+                      </a>
                     </div>
                   ))}
                 </div>

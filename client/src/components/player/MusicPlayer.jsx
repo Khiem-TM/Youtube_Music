@@ -7,8 +7,10 @@ import {
   FiVolume2,
   FiRepeat,
   FiShuffle,
-  FiMoreVertical,
+  FiHeart,
 } from "react-icons/fi";
+import localPlaylistService from "../../services/localPlaylistService";
+import { usePlayer } from "../../contexts/PlayerContext";
 
 // Page footer handle music for all
 function MusicPlayer({
@@ -36,7 +38,9 @@ function MusicPlayer({
   const [volume, setVolume] = useState(1);
   const [repeatLabel, setRepeatLabel] = useState("none");
   const [shuffleActive, setShuffleActive] = useState(false);
+  const [liked, setLiked] = useState(false);
 
+  const { state: ctxState, actions: ctxActions } = usePlayer();
   const isPlaying = localPlayer.isPlaying;
   const currentTime = localPlayer.currentTime;
   const duration = localPlayer.duration;
@@ -80,6 +84,9 @@ function MusicPlayer({
     setRepeatLabel(player.repeatMode || "none");
     setShuffleActive(!!player.shuffle);
     setVolume(typeof player.volume === "number" ? player.volume : 1);
+    const refId = (player.track?._id || player.track?.id || player.track?.slug || "").toString();
+    const arr = JSON.parse(localStorage.getItem("likedIds") || "[]");
+    setLiked(refId ? arr.includes(refId) : false);
   }, [player]);
 
   useEffect(() => {
@@ -151,7 +158,12 @@ function MusicPlayer({
             </span>
           </div>
 
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-3 min-w-0 flex-1" onClick={() => {
+            const idOrSlug = track.slug || track.id || track._id;
+            if (!idOrSlug) return;
+            const path = track.type === 'video' ? `/videos/details/${idOrSlug}` : `/songs/details/${idOrSlug}`;
+            window.location.href = path;
+          }}>
             <img
               src={cover || "/placeholder-cover.jpg"}
               alt="cover"
@@ -209,10 +221,18 @@ function MusicPlayer({
                   window.dispatchEvent(evt);
                   return;
                 }
-                alert("Thêm vào playlist của tôi (demo)");
+                const localToken = localStorage.getItem("localToken");
+                if (!localToken) {
+                  alert("Bạn chưa bật lưu Playlist local. Vào đăng ký và chọn opt-in để sử dụng.");
+                  return;
+                }
+                const refId = sanitize(track._id || track.id || track.slug || track.title || track.name || "");
+                const idToUse = refId || (sanitize(`${track.title || ''}-${track.artist || ''}`) || `song-${Date.now()}`);
+                // mở modal chọn playlist
+                window.dispatchEvent(new CustomEvent('open-playlist-picker', { detail: { refId: idToUse, type: 'song' } }))
               }}
             >
-              <FiMoreVertical className="w-5 h-5 text-gray-300" />
+              <FiHeart className={`w-5 h-5 ${liked ? 'text-red-500' : 'text-gray-300'}`} />
             </button>
           </div>
         </div>

@@ -66,16 +66,23 @@ export default function PlaylistDetails() {
 
       <div className="space-y-2">
         {tracks.map((s, idx) => (
-          <div key={s._id || s.id || idx} className="flex items-center gap-3 p-2 rounded hover:bg-white/10 cursor-pointer" onClick={() => playOne(s)}>
+          <div key={s._id || s.id || idx} className="group relative flex items-center gap-3 p-2 rounded hover:bg-white/10 cursor-pointer" onClick={() => playOne(s)}>
             <img src={(Array.isArray(s.thumbnails) ? s.thumbnails[0] : s.thumbnailUrl || s.thumb) || ""} alt="thumb" className="w-12 h-12 rounded object-cover" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-white truncate">{s.title || s.name}</div>
               <div className="text-xs text-gray-400 truncate">{Array.isArray(s.artists) ? s.artists.join(", ") : s.artist || ""}</div>
             </div>
+            {/* hover button to SongDetails */}
+            <a
+              href={`/songs/details/${s.id || s._id || s.slug || ''}`}
+              onClick={(e) => e.stopPropagation()}
+              className="absolute right-2 hidden group-hover:block px-3 py-1 text-xs rounded bg-white/10 hover:bg-white/20"
+            >
+              Detail
+            </a>
           </div>
         ))}
       </div>
     </div>
   );
 }
-

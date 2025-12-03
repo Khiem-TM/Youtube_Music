@@ -12,7 +12,7 @@ const formatViews = (num) => {
   return num + " views";
 };
 
-function VideoCard({ data }) {
+function VideoCard({ data, onClick }) {
   const [isHovered, setIsHovered] = useState(false);
 
   const channelName = data.channelName || "Various Artists";
@@ -22,6 +22,7 @@ function VideoCard({ data }) {
   return (
     <div
       className="cursor-pointer"
+      onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

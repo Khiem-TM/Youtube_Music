@@ -77,6 +77,7 @@ export default function SongDetails() {
               ? data.playlists
               : [],
           }}
+          onSelectTrack={(t) => setData({ ...t })}
         />
       )}
     </div>

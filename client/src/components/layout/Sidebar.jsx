@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   FiHome,
   FiCompass,
@@ -9,9 +10,11 @@ import {
   FiStar,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
+import localSvc from "../../services/localPlaylistService";
 
 function Sidebar({ collapsed = false }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   // Danh sach items ben sidebar
@@ -21,8 +24,14 @@ function Sidebar({ collapsed = false }) {
     { path: "/library", label: "Library", icon: FiMusic },
   ];
 
-  // Map API
-  const playlists = [];
+  // local playlists
+  const [playlists, setPlaylists] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [name, setName] = useState("");
+  useEffect(() => {
+    if (!user) return;
+    localSvc.listMyPlaylists().then(setPlaylists).catch(()=>{})
+  }, [user]);
 
   return (
     <div className="h-full bg-dark-900 text-gray-300">
@@ -76,6 +85,7 @@ function Sidebar({ collapsed = false }) {
               className={`w-full flex items-center ${
                 collapsed ? "justify-center" : "gap-3"
               } px-3 py-2 rounded-lg border border-white/5 hover:bg-white/10`}
+              onClick={() => setShowCreate(true)}
             >
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10">
                 <FiPlus className="w-4 h-4" />
@@ -84,6 +94,17 @@ function Sidebar({ collapsed = false }) {
                 <span className="text-sm font-medium">New playlist</span>
               )}
             </button>
+            {showCreate && (
+              <div className="mt-3 space-y-2">
+                <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="My Favourite Playlist" className="w-full bg-dark-800 border border-gray-700 rounded px-3 py-2 text-white" />
+                <div className="flex gap-2">
+                  <button className="px-3 py-2 rounded bg-white/10 text-white" onClick={()=>setShowCreate(false)}>Cancel</button>
+                  <button className="px-3 py-2 rounded bg-primary-500 text-white" onClick={async ()=>{
+                    try { const pl = await localSvc.createPlaylist(name); setShowCreate(false); setName(''); const next = await localSvc.listMyPlaylists(); setPlaylists(next); navigate(`/my-playlists/${pl._id}`) } catch(e){ alert('Không thể tạo playlist') }
+                  }}>Create</button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="mt-4">
@@ -109,13 +130,16 @@ function Sidebar({ collapsed = false }) {
         {user && !collapsed && (
           <div className="space-y-1">
             {playlists.map((p) => (
-              <Link
-                key={p.path}
-                to={p.path}
-                className="block px-3 py-2 rounded-lg hover:bg-white/10"
-              >
-                <div className="text-sm text-white">{p.label}</div>
-                <div className="text-xs text-gray-400">{p.note}</div>
+              <Link key={p._id} to={`/my-playlists/${p._id}`} className="block px-3 py-2 rounded-lg hover:bg-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                    <img src="/favicon.ico" alt="avatar" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-white">{p.name}</div>
+                    <div className="text-xs text-gray-400">Playlist</div>
+                  </div>
+                </div>
               </Link>
             ))}
           </div>

@@ -319,11 +319,14 @@ function Explore() {
       >
         {/* item from list */}
         {videos.map((item) => (
-          <div
-            key={item._id || item.id || item.slug}
-            className="min-w-[250px] flex-shrink-0"
-          >
-            <VideoCard data={item} />
+          <div key={item._id || item.id || item.slug} className="min-w-[250px] flex-shrink-0">
+            <VideoCard
+              data={item}
+              onClick={() => {
+                const id = item.id || item._id || item.slug;
+                navigate(`/videos/details/${id}`);
+              }}
+            />
           </div>
         ))}
       </div>
