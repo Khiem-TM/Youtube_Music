@@ -46,12 +46,23 @@ const svc = {
     return res.data
   },
   addToPlaylist: async (playlistId, refId, type = 'song') => {
-    const res = await localApi.post(`/playlists/${playlistId}/items`, { type, refId })
+    let payload
+    if (typeof type === 'object' && type) payload = { ...type, refId }
+    else payload = { type, refId }
+    const res = await localApi.post(`/playlists/${playlistId}/items`, payload)
+    return res.data
+  },
+  removeFromPlaylist: async (playlistId, itemId) => {
+    const res = await localApi.delete(`/playlists/${playlistId}/items/${itemId}`)
     return res.data
   },
   listPlaylistItems: async (playlistId) => {
     const res = await localApi.get(`/playlists/${playlistId}/items`)
     return res.data.items || []
+  },
+  containsRef: async (refId) => {
+    const res = await localApi.get(`/playlists/contains/${encodeURIComponent(refId)}`)
+    return res.data
   }
 }
 

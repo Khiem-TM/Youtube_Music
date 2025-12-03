@@ -7,7 +7,7 @@ import {
   FiVolume2,
   FiRepeat,
   FiShuffle,
-  FiHeart,
+  FiPlus,
 } from "react-icons/fi";
 import localPlaylistService from "../../services/localPlaylistService";
 import { usePlayer } from "../../contexts/PlayerContext";
@@ -38,7 +38,7 @@ function MusicPlayer({
   const [volume, setVolume] = useState(1);
   const [repeatLabel, setRepeatLabel] = useState("none");
   const [shuffleActive, setShuffleActive] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const { state: ctxState, actions: ctxActions } = usePlayer();
   const isPlaying = localPlayer.isPlaying;
@@ -84,22 +84,50 @@ function MusicPlayer({
     setRepeatLabel(player.repeatMode || "none");
     setShuffleActive(!!player.shuffle);
     setVolume(typeof player.volume === "number" ? player.volume : 1);
-    const refId = (player.track?._id || player.track?.id || player.track?.slug || "").toString();
-    const arr = JSON.parse(localStorage.getItem("likedIds") || "[]");
-    setLiked(refId ? arr.includes(refId) : false);
+    setToast(null);
   }, [player]);
 
+  useEffect(() => {
+    const onAdded = (e) => {
+      setToast({ type: 'success', message: 'Đã thêm vào playlist thành công' });
+      setTimeout(() => setToast(null), 3000);
+    };
+    const onDuplicate = (e) => {
+      setToast({ type: 'warning', message: 'Bài hát đã có trong playlist' });
+      setTimeout(() => setToast(null), 3000);
+    };
+    window.addEventListener('playlist-item-added', onAdded);
+    window.addEventListener('playlist-item-duplicate', onDuplicate);
+    return () => {
+      window.removeEventListener('playlist-item-added', onAdded);
+      window.removeEventListener('playlist-item-duplicate', onDuplicate);
+    };
+  }, []);
+
+  // set src only when track changes to preserve currentTime on pause/resume
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.src = sanitize(track.audioUrl || "");
-    audio.volume = volume;
+  }, [track.audioUrl]);
+
+  // control playback on isPlaying toggle without resetting src
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
     if (track.audioUrl && isPlaying) {
       audio.play().catch(() => {});
     } else {
       audio.pause();
     }
-  }, [track.audioUrl, isPlaying, volume]);
+  }, [isPlaying, track.audioUrl]);
+
+  // volume changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+  }, [volume]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -132,7 +160,7 @@ function MusicPlayer({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <button
-              onClick={onPrev}
+              onClick={() => { (onPrev ? onPrev() : ctxActions.prev()); }}
               className="p-2 text-gray-300 hover:text-white"
             >
               <FiSkipBack className="w-5 h-5" />
@@ -148,7 +176,7 @@ function MusicPlayer({
               )}
             </button>
             <button
-              onClick={onNext}
+              onClick={() => { (onNext ? onNext() : ctxActions.next()); }}
               className="p-2 text-gray-300 hover:text-white"
             >
               <FiSkipForward className="w-5 h-5" />
@@ -193,7 +221,7 @@ function MusicPlayer({
                   const v = parseFloat(e.target.value);
                   setVolume(v);
                   const a = audioRef.current; if (a) a.volume = v;
-                  onSetVolume && onSetVolume(v);
+                  (onSetVolume ? onSetVolume(v) : ctxActions.setVolume(v));
                 }}
                 className="w-24"
               />
@@ -201,19 +229,20 @@ function MusicPlayer({
             <button
               className={`p-2 rounded ${repeatLabel !== "none" ? "bg-white/10" : ""}`}
               title={`repeat: ${repeatLabel}`}
-              onClick={() => { onCycleRepeat && onCycleRepeat(); }}
+              onClick={() => { (onCycleRepeat ? onCycleRepeat() : ctxActions.cycleRepeat()); }}
             >
               <FiRepeat className="w-5 h-5 text-gray-300" />
             </button>
             <button
               className={`p-2 rounded ${shuffleActive ? "bg-white/10" : ""}`}
               title={shuffleActive ? "Shuffle on" : "Shuffle off"}
-              onClick={() => { onToggleShuffle && onToggleShuffle(); }}
+              onClick={() => { (onToggleShuffle ? onToggleShuffle() : ctxActions.toggleShuffle()); }}
             >
               <FiShuffle className="w-5 h-5 text-gray-300" />
             </button>
             <button
               className="p-2"
+              title="Thêm vào playlist"
               onClick={() => {
                 const token = localStorage.getItem("token");
                 if (!token) {
@@ -227,15 +256,19 @@ function MusicPlayer({
                   return;
                 }
                 const refId = sanitize(track._id || track.id || track.slug || track.title || track.name || "");
-                const idToUse = refId || (sanitize(`${track.title || ''}-${track.artist || ''}`) || `song-${Date.now()}`);
-                // mở modal chọn playlist
-                window.dispatchEvent(new CustomEvent('open-playlist-picker', { detail: { refId: idToUse, type: 'song' } }))
+                if (!refId) return;
+                const thumb = cover || sanitize(track.thumbnailUrl || track.thumb || '')
+                window.dispatchEvent(new CustomEvent('open-playlist-picker', { detail: { refId, type: 'song', thumbnail: thumb } }))
               }}
             >
-              <FiHeart className={`w-5 h-5 ${liked ? 'text-red-500' : 'text-gray-300'}`} />
+              <FiPlus className="w-5 h-5 text-gray-300" />
             </button>
+            
           </div>
         </div>
+        {toast && (
+          <div className={`absolute -top-8 right-2 px-3 py-1 rounded text-sm ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-yellow-500 text-black'}`}>{toast.message}</div>
+        )}
       </div>
     </div>
   );

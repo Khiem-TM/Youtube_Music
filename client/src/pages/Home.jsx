@@ -97,6 +97,11 @@ function Home() {
     fetchByCountry();
   }, [countryCode]);
 
+  // reset scroll and ensure fresh render when country playlists change
+  useEffect(() => {
+    try { countryRef.current && (countryRef.current.scrollLeft = 0); } catch (_) {}
+  }, [countryPlaylists]);
+
   useEffect(() => {
     const fetchPersonalized = async () => {
       if (!token) {
@@ -361,7 +366,11 @@ function Home() {
             className={`flex gap-4 overflow-x-auto custom-scrollbar ${countryScrolling ? "" : "no-scrollbar"} pb-2`}
           >
             {countryPlaylists.map((item) => (
-              <div key={item._id || item.id || item.slug} className="min-w-[300px]" onClick={() => handlePlayEvent({ ...item, type: "playlist" })}>
+              <div key={item._id || item.id || item.slug} className="min-w-[300px]" onClick={() => {
+                const idOrSlug = item.slug || item.id || item._id;
+                if (idOrSlug) navigate(`/playlists/details/${idOrSlug}`);
+                handlePlayEvent({ ...item, type: "playlist" });
+              }}>
                 <Home3Card data={{
                   title: item.title || item.name,
                   thumbnails: Array.isArray(item.thumbnails) ? item.thumbnails[0] : item.thumbnailUrl || item.thumb,

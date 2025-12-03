@@ -80,7 +80,7 @@ export default function MusicPlayerForm({ currentTrack, onSelectTrack }) {
                           audioUrl: track.audioUrl,
                           thumbnails: track.thumbnails,
                           artist: track.artist,
-                        });
+                        }, albumTracks);
                         onSelectTrack && onSelectTrack(track);
                       }}
                       className="group relative flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
@@ -130,15 +130,16 @@ export default function MusicPlayerForm({ currentTrack, onSelectTrack }) {
                         {(Array.isArray(pl.tracks) ? pl.tracks : []).map((track) => (
                           <div
                             key={track.id}
-                            onClick={() =>
+                            onClick={() => {
                               actions.playTrack({
                                 ...track,
                                 type: "song",
                                 title: track.title,
                                 audioUrl: track.audioUrl,
                                 thumbnails: track.thumbnails,
-                              })
-                            }
+                              }, pl.tracks);
+                              onSelectTrack && onSelectTrack(track);
+                            }}
                             className="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                           >
                             <div className="w-12 h-12 flex-shrink-0">

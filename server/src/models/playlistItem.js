@@ -6,6 +6,7 @@ const playlistItemSchema = new mongoose.Schema({
   refId: { type: String, required: true },
   title: { type: String },
   artist: { type: String },
+  thumbnail: { type: String },
   thumbnailUrl: { type: String },
   audioUrl: { type: String },
   duration: { type: Number },

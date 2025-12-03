@@ -51,7 +51,6 @@ const ReleaseHubCard = ({ data }) => {
         </div>
       </div>
 
-      {/* --- TEXT SECTION BELOW CARD --- */}
       <div className="px-2 py-3">
         <p className="text-base font-semibold truncate">{title}</p>
         <p className="text-xs text-gray-400 truncate">{sub}</p>

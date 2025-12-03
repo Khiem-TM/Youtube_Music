@@ -13,6 +13,7 @@ app.use(cors({ origin: [/http:\/\/localhost:\d+/], credentials: false }))
 app.use(express.json())
 app.use(morgan('dev'))
 
+// config and connect to myDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ytmusic_local'
 let dbConnected = false
 mongoose.connect(MONGO_URI)
@@ -23,11 +24,11 @@ process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection:', err)
 })
 
-app.get('/health', (req, res) => res.json({ ok: true, dbConnected }))
+app.get('/health', (req, res) => res.json({ ok: true, dbConnected })) // Lấy ra condition của DB connetion
 app.use('/local-auth', authRouter)
 app.use('/playlists', playlistsRouter)
 
 const PORT = process.env.PORT || 8080
 app.listen(PORT, () => {
-  console.log(`Local playlist server listening on http://localhost:${PORT}`)
+  console.log(`http://localhost:${PORT}`)
 })

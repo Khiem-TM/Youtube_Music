@@ -16,7 +16,7 @@ const initialState = {
   volume: 1,
   repeatMode: "none", // none | all | one
   shuffle: false,
-  likedIds: JSON.parse(localStorage.getItem('likedIds') || '[]'),
+  likedIds: JSON.parse(localStorage.getItem("likedIds") || "[]"),
 };
 
 function reducer(state, action) {
@@ -24,7 +24,10 @@ function reducer(state, action) {
     case "PLAY_TRACK": {
       const { track, queue } = action.payload;
       const q = Array.isArray(queue) ? queue : [track].filter(Boolean);
-      const idx = q.findIndex((t) => (t._id || t.id || t.slug) === (track._id || track.id || track.slug));
+      const idx = q.findIndex(
+        (t) =>
+          (t._id || t.id || t.slug) === (track._id || track.id || track.slug)
+      );
       return {
         ...state,
         isVisible: true,
@@ -39,8 +42,16 @@ function reducer(state, action) {
     case "TOGGLE_PLAY":
       return { ...state, isPlaying: !state.isPlaying, isVisible: true };
     case "STOP":
-      return { ...state, isPlaying: false, isVisible: false, track: null, index: -1, queue: [] };
+      return {
+        ...state,
+        isPlaying: false,
+        isVisible: false,
+        track: null,
+        index: -1,
+        queue: [],
+      };
     case "NEXT": {
+      // Trong TH repeat
       if (state.repeatMode === "one") {
         const track = state.queue[state.index] || state.track;
         return { ...state, track, isPlaying: true };
@@ -55,10 +66,18 @@ function reducer(state, action) {
         }
       }
       if (nextIndex >= state.queue.length) {
-        if (state.repeatMode === "all") nextIndex = 0; else return { ...state, isPlaying: false };
+        if (state.repeatMode === "all") nextIndex = 0;
+        else return { ...state, isPlaying: false };
       }
       const track = state.queue[nextIndex];
-      return { ...state, index: nextIndex, track, isPlaying: true, currentTime: 0, duration: track?.duration || 0 };
+      return {
+        ...state,
+        index: nextIndex,
+        track,
+        isPlaying: true,
+        currentTime: 0,
+        duration: track?.duration || 0,
+      };
     }
     case "PREV": {
       if (state.repeatMode === "one") {
@@ -67,10 +86,19 @@ function reducer(state, action) {
       }
       let prevIndex = state.index - 1;
       if (prevIndex < 0) {
-        if (state.repeatMode === "all") prevIndex = Math.max(state.queue.length - 1, 0); else return state;
+        if (state.repeatMode === "all")
+          prevIndex = Math.max(state.queue.length - 1, 0);
+        else return state;
       }
       const track = state.queue[prevIndex];
-      return { ...state, index: prevIndex, track, isPlaying: true, currentTime: 0, duration: track?.duration || 0 };
+      return {
+        ...state,
+        index: prevIndex,
+        track,
+        isPlaying: true,
+        currentTime: 0,
+        duration: track?.duration || 0,
+      };
     }
     case "SET_PROGRESS":
       return { ...state, currentTime: action.payload };
@@ -87,13 +115,13 @@ function reducer(state, action) {
     case "LIKE_ADD": {
       const refId = action.payload;
       const next = Array.from(new Set([...(state.likedIds || []), refId]));
-      localStorage.setItem('likedIds', JSON.stringify(next));
+      localStorage.setItem("likedIds", JSON.stringify(next));
       return { ...state, likedIds: next };
     }
     case "LIKE_REMOVE": {
       const refId = action.payload;
       const next = (state.likedIds || []).filter((x) => x !== refId);
-      localStorage.setItem('likedIds', JSON.stringify(next));
+      localStorage.setItem("likedIds", JSON.stringify(next));
       return { ...state, likedIds: next };
     }
     default:
@@ -120,42 +148,47 @@ export function PlayerProvider({ children }) {
     } catch (_) {}
   };
 
-  const actions = useMemo(() => ({
-    playTrack: (track, queue) => {
-      dispatch({ type: "PLAY_TRACK", payload: { track, queue } });
-      recordPlayEvent(track);
-    },
-    togglePlay: () => dispatch({ type: "TOGGLE_PLAY" }),
-    stop: () => dispatch({ type: "STOP" }),
-    next: () => dispatch({ type: "NEXT" }),
-    prev: () => dispatch({ type: "PREV" }),
-    setProgress: (time) => dispatch({ type: "SET_PROGRESS", payload: time }),
-    setVolume: (v) => dispatch({ type: "SET_VOLUME", payload: v }),
-    cycleRepeat: () => dispatch({ type: "CYCLE_REPEAT" }),
-    toggleShuffle: () => dispatch({ type: "TOGGLE_SHUFFLE" }),
-    isLiked: (refId) => (state.likedIds || []).includes(refId),
-    toggleLike: async (refId, type = 'song') => {
-      if (!refId) return;
-      const liked = (state.likedIds || []).includes(refId)
-      try {
-        if (!liked) {
-          dispatch({ type: 'LIKE_ADD', payload: refId })
-          const svc = (await import('../services/localPlaylistService.js')).default
-          await svc.addFavorite(refId, type)
-          console.log('[like] add', refId)
-        } else {
-          dispatch({ type: 'LIKE_REMOVE', payload: refId })
-          const svc = (await import('../services/localPlaylistService.js')).default
-          await svc.removeFavorite(refId)
-          console.log('[like] remove', refId)
+  const actions = useMemo(
+    () => ({
+      playTrack: (track, queue) => {
+        dispatch({ type: "PLAY_TRACK", payload: { track, queue } });
+        recordPlayEvent(track);
+      },
+      togglePlay: () => dispatch({ type: "TOGGLE_PLAY" }),
+      stop: () => dispatch({ type: "STOP" }),
+      next: () => dispatch({ type: "NEXT" }),
+      prev: () => dispatch({ type: "PREV" }),
+      setProgress: (time) => dispatch({ type: "SET_PROGRESS", payload: time }),
+      setVolume: (v) => dispatch({ type: "SET_VOLUME", payload: v }),
+      cycleRepeat: () => dispatch({ type: "CYCLE_REPEAT" }),
+      toggleShuffle: () => dispatch({ type: "TOGGLE_SHUFFLE" }),
+      isLiked: (refId) => (state.likedIds || []).includes(refId),
+      toggleLike: async (refId, type = "song") => {
+        if (!refId) return;
+        const liked = (state.likedIds || []).includes(refId);
+        try {
+          if (!liked) {
+            dispatch({ type: "LIKE_ADD", payload: refId });
+            const svc = (await import("../services/localPlaylistService.js"))
+              .default;
+            await svc.addFavorite(refId, type);
+            console.log("[like] add", refId);
+          } else {
+            dispatch({ type: "LIKE_REMOVE", payload: refId });
+            const svc = (await import("../services/localPlaylistService.js"))
+              .default;
+            await svc.removeFavorite(refId);
+            console.log("[like] remove", refId);
+          }
+        } catch (e) {
+          console.warn("toggleLike failed, reverting", e);
+          if (!liked) dispatch({ type: "LIKE_REMOVE", payload: refId });
+          else dispatch({ type: "LIKE_ADD", payload: refId });
         }
-      } catch (e) {
-        console.warn('toggleLike failed, reverting', e)
-        if (!liked) dispatch({ type: 'LIKE_REMOVE', payload: refId })
-        else dispatch({ type: 'LIKE_ADD', payload: refId })
-      }
-    },
-  }), [state.likedIds]);
+      },
+    }),
+    [state.likedIds]
+  );
 
   return (
     <PlayerContext.Provider value={{ state, actions }}>

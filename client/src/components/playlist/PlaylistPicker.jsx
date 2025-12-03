@@ -7,6 +7,8 @@ export default function PlaylistPicker() {
   const [pending, setPending] = useState(null) // { refId, type }
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
+  const [addingId, setAddingId] = useState('')
+  const [creatingLoading, setCreatingLoading] = useState(false)
 
   useEffect(() => {
     const handler = (e) => {
@@ -28,14 +30,24 @@ export default function PlaylistPicker() {
           <h3 className="text-lg font-semibold text-white mb-3">Chọn playlist</h3>
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {playlists.map((pl)=> (
-              <button key={pl._id} onClick={async ()=>{
+              <button key={pl._id} disabled={!!addingId} onClick={async ()=>{
                 try {
-                  await localSvc.addToPlaylist(pl._id, pending.refId, pending.type)
+                  setAddingId(pl._id)
+                  const payload = { type: pending.type, refId: pending.refId, thumbnail: pending.thumbnail }
+                  await localSvc.addToPlaylist(pl._id, pending.refId, payload)
+                  window.dispatchEvent(new CustomEvent('playlist-item-added', { detail: { refId: pending.refId, playlistId: pl._id } }))
                   setOpen(false)
-                } catch(e) { alert('Không thể thêm vào playlist') }
+                } catch(e) {
+                  if (e?.response?.status === 409) {
+                    window.dispatchEvent(new CustomEvent('playlist-item-duplicate', { detail: { refId: pending.refId, playlistId: pl._id } }))
+                    setOpen(false)
+                  } else {
+                    alert('Không thể thêm vào playlist')
+                  }
+                } finally { setAddingId('') }
               }} className="w-full text-left px-3 py-2 rounded hover:bg-white/10">
                 <div className="text-sm text-white">{pl.name}</div>
-                <div className="text-xs text-gray-400">{new Date(pl.createdAt).toLocaleDateString()}</div>
+                <div className="text-xs text-gray-400">{addingId === pl._id ? 'Đang thêm...' : new Date(pl.createdAt).toLocaleDateString()}</div>
               </button>
             ))}
           </div>
@@ -45,14 +57,24 @@ export default function PlaylistPicker() {
                 <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Tên playlist" className="w-full bg-dark-800 border border-gray-700 rounded px-3 py-2 text-white" />
                 <div className="flex gap-2">
                   <button onClick={()=>setCreating(false)} className="px-3 py-2 rounded bg-white/10 text-white">Hủy</button>
-                  <button onClick={async ()=>{
+                  <button disabled={creatingLoading} onClick={async ()=>{
                     try {
+                      setCreatingLoading(true)
                       const pl = await localSvc.createPlaylist(name)
                       const next = await localSvc.listMyPlaylists()
                       setPlaylists(next)
-                      await localSvc.addToPlaylist(pl._id, pending.refId, pending.type)
+                      const payload = { type: pending.type, refId: pending.refId, thumbnail: pending.thumbnail }
+                      await localSvc.addToPlaylist(pl._id, pending.refId, payload)
+                      window.dispatchEvent(new CustomEvent('playlist-item-added', { detail: { refId: pending.refId, playlistId: pl._id } }))
                       setOpen(false)
-                    } catch(e){ alert('Không thể tạo playlist') }
+                    } catch(e){
+                      if (e?.response?.status === 409) {
+                        window.dispatchEvent(new CustomEvent('playlist-item-duplicate', { detail: { refId: pending.refId, playlistId: pl._id } }))
+                        setOpen(false)
+                      } else {
+                        alert('Không thể tạo playlist')
+                      }
+                    } finally { setCreatingLoading(false) }
                   }} className="px-3 py-2 rounded bg-primary-500 text-white">Tạo</button>
                 </div>
               </div>
