@@ -2,9 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const ReleaseHubCard = ({ data }) => {
-  const imageUrl =
-    data?.imageUrl ||
-    "https://via.placeholder.com/200x300/1e293b/ffffff?text=No+Image";
+  const imageUrl = data.imageUrl;
 
   const title = data?.title || "RELEASED";
   const sub = data?.sub || "Various Artists";

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import localSvc from "../services/localPlaylistService";
 import axios from "axios";
 import { FiTrash2, FiPlay } from "react-icons/fi";
@@ -9,10 +9,12 @@ const BASE_URL = "https://youtube-music.f8team.dev/api";
 
 export default function MyPlaylist() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
+  const [playlist, setPlaylist] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -20,7 +22,14 @@ export default function MyPlaylist() {
         setLoading(true);
         const raw = await localSvc.listPlaylistItems(id);
         setItems(raw);
-      } catch (e) {
+        try {
+          const pl = await localSvc.getPlaylist(id);
+          setPlaylist(pl);
+        } catch (err) {
+          console.warn("Không thể lấy thông tin playlist:", err);
+        }
+      } catch (err) {
+        console.error("Không thể tải playlist:", err);
         setError("Không thể tải playlist");
       } finally {
         setLoading(false);
@@ -30,20 +39,48 @@ export default function MyPlaylist() {
   }, [id]);
 
   const handleRemoved = async (itemId) => {
-    try {
-      setItems((prev) => prev.filter((x) => x._id !== itemId));
-    } catch (_) {}
+    setItems((prev) => prev.filter((x) => x._id !== itemId));
   };
 
   return (
     <div className="px-6 py-6">
-      <h1 className="text-2xl font-bold text-white mb-4">My Playlist</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-white">
+          {playlist?.name || "My Playlist"}
+        </h1>
+        <button
+          aria-label="Xóa playlist"
+          className={`p-2 rounded-full bg-red-600 hover:bg-red-700 text-white ${
+            deleting ? "opacity-60 cursor-not-allowed" : ""
+          }`}
+          onClick={async () => {
+            if (deleting) return;
+            if (!confirm("Xóa toàn bộ playlist này?")) return;
+            try {
+              setDeleting(true);
+              await localSvc.deletePlaylist(id);
+              navigate("/library");
+            } catch (err) {
+              console.error("Không thể xóa playlist:", err);
+            } finally {
+              setDeleting(false);
+            }
+          }}
+        >
+          <FiTrash2 className="w-5 h-5" />
+        </button>
+      </div>
       {loading && <div className="text-gray-400">Đang tải...</div>}
       {error && <div className="text-red-400">{error}</div>}
       <div
         className="grid gap-4"
         style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}
       >
+        {items.length === 0 && (
+          <div className="col-span-full text-center text-gray-400 py-8">
+            Playlist rỗng
+          </div>
+        )}
         {items.map((it) => (
           <SongCard
             key={it._id}
@@ -58,78 +95,118 @@ export default function MyPlaylist() {
 }
 
 function SongCard({ item, playlistId, onRemoved }) {
-  const [detail, setDetail] = useState(null);
+  const [detail, setDetail] = useState(item);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [removing, setRemoving] = useState(false);
-  const { actions } = usePlayer();
+  const { actions, state } = usePlayer();
   useEffect(() => {
-    let ok = true;
-    const load = async () => {
-      try {
-        if (item.type === "song") {
-          const res = await axios.get(`${BASE_URL}/songs/details/${item.refId}`, { params: { limit: 20 } });
-          if (ok) setDetail(res.data);
-        }
-      } catch (_) {}
-    };
-    load();
-    return () => {
-      ok = false;
-    };
+    setDetail(item);
+    setDetailError("");
   }, [item]);
 
-  const idOrSlug = useMemo(
-    () => detail?.slug || detail?._id || item.refId,
-    [detail, item]
+  const refId = useMemo(
+    () => (item.refId || item._id || "").toString(),
+    [item.refId, item._id]
   );
+  const currentId = useMemo(
+    () =>
+      (
+        state.track?._id ||
+        state.track?.id ||
+        state.track?.slug ||
+        state.track?.videoId ||
+        ""
+      ).toString(),
+    [state.track]
+  );
+  const isCurrent = !!currentId && refId && currentId === refId;
+
+  const fetchDetail = useCallback(async () => {
+    if (detail?.audioUrl || !refId) return detail;
+    setDetailLoading(true);
+    setDetailError("");
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/songs/details/${encodeURIComponent(refId)}`,
+        { params: { limit: 20 } }
+      );
+      const d = res.data || {};
+      const normalized = {
+        ...d,
+        _id: d._id || d.id || refId,
+        id: d.id || d._id || refId,
+        refId,
+      };
+      setDetail((prev) => ({ ...prev, ...normalized }));
+      return normalized;
+    } catch (err) {
+      console.warn("Không thể tải chi tiết bài hát", refId, err);
+      setDetailError("Không khả dụng");
+      return null;
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [detail, refId]);
+
+  const display = detail || item;
+  const thumb =
+    (Array.isArray(display?.thumbnails)
+      ? display.thumbnails[0]
+      : display?.thumbnail || display?.thumbnailUrl || item.thumbnail) ||
+    "/favicon.ico";
+
+  const handlePlay = async () => {
+    const data = display?.audioUrl ? display : await fetchDetail();
+    if (!data || !data.audioUrl) {
+      alert("Không thể phát bài hát này");
+      return;
+    }
+    actions.playTrack({
+      ...data,
+      type: "song",
+      title: data.title || item.title || refId,
+      thumbnails: Array.isArray(data.thumbnails)
+        ? data.thumbnails
+        : [data.thumbnail || data.thumbnailUrl || thumb].filter(Boolean),
+      artists: Array.isArray(data.artists)
+        ? data.artists
+        : [data.artist || item.artist].filter(Boolean),
+      _id: data._id || refId,
+      id: data.id || refId,
+    });
+  };
 
   return (
-    <div className="group relative rounded-lg bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] transition-colors p-3">
+    <div
+      className={`group relative rounded-lg ${
+        isCurrent ? "ring-2 ring-primary-500" : ""
+      } bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.12)] transition-colors p-3`}
+    >
       <div className="relative">
         <img
-          src={
-            (Array.isArray(detail?.thumbnails)
-              ? detail.thumbnails[0]
-              : detail?.thumbnailUrl || item.thumbnail || item.thumbnailUrl) ||
-            "/favicon.ico"
-          }
+          src={thumb}
           alt="thumb"
           className="w-[150px] h-[150px] rounded object-cover mx-auto"
           onClick={() => {
-            if (!detail) return;
-            actions.playTrack({
-              ...detail,
-              type: "song",
-              title: detail.title,
-              audioUrl: detail.audioUrl,
-              thumbnails: detail.thumbnails,
-              artist: Array.isArray(detail.artists)
-                ? detail.artists.join(", ")
-                : detail.artist,
-            });
+            if (detailError) return;
+            handlePlay();
           }}
         />
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white"
             onClick={() => {
-              if (!detail) return;
-              actions.playTrack({
-                ...detail,
-                type: "song",
-                title: detail.title,
-                audioUrl: detail.audioUrl,
-                thumbnails: detail.thumbnails,
-                artist: Array.isArray(detail.artists)
-                  ? detail.artists.join(", ")
-                  : detail.artist,
-              });
+              if (detailError) return;
+              handlePlay();
             }}
           >
             <FiPlay className="w-5 h-5" />
           </button>
         </div>
         <button
-          className={`absolute top-2 right-2 px-2 py-1 rounded bg-red-600 text-white text-xs flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+          aria-label="Xóa item"
+          className={`absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full text-white/80 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity ${
             removing ? "cursor-not-allowed opacity-60" : ""
           }`}
           onClick={async () => {
@@ -139,27 +216,42 @@ function SongCard({ item, playlistId, onRemoved }) {
               setRemoving(true);
               await localSvc.removeFromPlaylist(playlistId, item._id);
               onRemoved && onRemoved(item._id);
-            } catch (e) {
+            } catch (err) {
+              console.error("Không thể xóa item khỏi playlist:", err);
             } finally {
               setRemoving(false);
             }
           }}
         >
-          <FiTrash2 className="w-4 h-4" /> Xóa
+          <FiTrash2 className="w-4 h-4" />
         </button>
+        {detailLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="px-2 py-1 rounded bg-white/10 text-xs text-white">
+              Đang tải…
+            </span>
+          </div>
+        )}
+        {detailError && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="px-2 py-1 rounded bg-red-600 text-xs text-white">
+              Không khả dụng
+            </span>
+          </div>
+        )}
       </div>
       <div className="mt-3 min-w-0">
         <div className="text-white truncate text-sm">
-          {detail?.title || item.refId}
+          {display?.title || item.title || refId}
         </div>
         <div className="text-xs text-gray-400 truncate">
-          {Array.isArray(detail?.artists)
-            ? detail.artists.join(", ")
-            : detail?.artist || ""}
+          {Array.isArray(display?.artists)
+            ? display.artists.join(", ")
+            : display?.artist || item.artist || ""}
         </div>
-        {idOrSlug && (
+        {refId && (
           <a
-            href={`/songs/details/${idOrSlug}`}
+            href={`/songs/details/${encodeURIComponent(refId)}`}
             className="mt-1 inline-block text-xs text-blue-400 hover:text-blue-300"
           >
             Xem chi tiết

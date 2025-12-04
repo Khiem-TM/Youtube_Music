@@ -44,8 +44,18 @@ router.get('/:id/items', async (req, res) => {
   const { id } = req.params
   const playlist = await Playlist.findOne({ _id: id, userId: req.user.id })
   if (!playlist) return res.status(404).json({ message: 'playlist not found' })
-  const items = await PlaylistItem.find({ playlistId: id }).sort({ createdAt: -1 })
+  const items = await PlaylistItem.find({ playlistId: id })
+    .sort({ createdAt: -1 })
+    .select('_id refId type title artist thumbnail thumbnailUrl audioUrl duration createdAt')
   res.json({ items })
+})
+
+// get single playlist details
+router.get('/:id', async (req, res) => {
+  const { id } = req.params
+  const playlist = await Playlist.findOne({ _id: id, userId: req.user.id })
+  if (!playlist) return res.status(404).json({ message: 'playlist not found' })
+  res.json(playlist)
 })
 
 router.delete('/:id/items/:itemId', async (req, res) => {

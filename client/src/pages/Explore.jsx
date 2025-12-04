@@ -193,7 +193,14 @@ function Explore() {
             key={item._id || item.id || item.slug}
             className="min-w-[250px] flex-shrink-0"
           >
-            <AlbumCard data={item} />
+            <AlbumCard
+              data={item}
+              onClick={() => {
+                const slug = item.slug || item.id || item._id;
+                if (!slug) return;
+                navigate(`/albums/details/${slug}`);
+              }}
+            />
           </div>
         ))}
       </div>

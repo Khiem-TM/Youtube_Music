@@ -41,6 +41,10 @@ const svc = {
     const res = await localApi.get('/playlists/me')
     return res.data.items || []
   },
+  getPlaylist: async (id) => {
+    const res = await localApi.get(`/playlists/${id}`)
+    return res.data
+  },
   createPlaylist: async (name, description) => {
     const res = await localApi.post('/playlists', { name: name || 'My Favourite Playlist', description })
     return res.data
@@ -54,6 +58,10 @@ const svc = {
   },
   removeFromPlaylist: async (playlistId, itemId) => {
     const res = await localApi.delete(`/playlists/${playlistId}/items/${itemId}`)
+    return res.data
+  },
+  deletePlaylist: async (playlistId) => {
+    const res = await localApi.delete(`/playlists/${playlistId}`)
     return res.data
   },
   listPlaylistItems: async (playlistId) => {

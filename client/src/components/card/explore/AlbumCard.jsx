@@ -1,12 +1,21 @@
 import React from "react";
 
-function AlbumCard({ data }) {
+function AlbumCard({ data, onClick }) {
   const artistName = data.artist || "Nhiều Nghệ Sĩ";
   const isExplicit = data.explicit;
-  const isSingle = data.albumType === "Single";
-
   return (
-    <div className="w-[250px] flex-shrink-0 cursor-pointer group">
+    <div
+      className="w-[250px] flex-shrink-0 cursor-pointer group"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick && onClick();
+        }
+      }}
+    >
       <div className="relative w-full aspect-square overflow-hidden rounded-lg shadow-xl">
         <img
           src={data.thumb}

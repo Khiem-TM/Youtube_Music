@@ -45,10 +45,11 @@ function MusicPlayer({
   const currentTime = localPlayer.currentTime;
   const duration = localPlayer.duration;
   const track = localPlayer.track || {};
-  const sanitize = (u) => (typeof u === "string" ? u.replace(/[`]/g, "").trim() : u || "");
+  const sanitize = (u) =>
+    typeof u === "string" ? u.replace(/[`]/g, "").trim() : u || "";
   const cover = useMemo(() => {
     if (Array.isArray(track.thumbnails)) return sanitize(track.thumbnails[0]);
-    if (typeof track.thumbnails === 'string') return sanitize(track.thumbnails);
+    if (typeof track.thumbnails === "string") return sanitize(track.thumbnails);
     return sanitize(track.thumbnailUrl || track.thumb || "");
   }, [track.thumbnails, track.thumbnailUrl, track.thumb]);
 
@@ -94,22 +95,22 @@ function MusicPlayer({
 
   useEffect(() => {
     const onAdded = (e) => {
-      setToast({ type: 'success', message: 'Đã thêm vào playlist thành công' });
+      setToast({ type: "success", message: "Đã thêm vào playlist thành công" });
       setTimeout(() => setToast(null), 3000);
     };
     const onDuplicate = (e) => {
-      setToast({ type: 'warning', message: 'Bài hát đã có trong playlist' });
+      setToast({ type: "warning", message: "Bài hát đã có trong playlist" });
       setTimeout(() => setToast(null), 3000);
     };
-    window.addEventListener('playlist-item-added', onAdded);
-    window.addEventListener('playlist-item-duplicate', onDuplicate);
+    window.addEventListener("playlist-item-added", onAdded);
+    window.addEventListener("playlist-item-duplicate", onDuplicate);
     return () => {
-      window.removeEventListener('playlist-item-added', onAdded);
-      window.removeEventListener('playlist-item-duplicate', onDuplicate);
+      window.removeEventListener("playlist-item-added", onAdded);
+      window.removeEventListener("playlist-item-duplicate", onDuplicate);
     };
   }, []);
 
-  // set src only when track changes to preserve currentTime on pause/resume
+  // set src khi có sự kiện pause hoặc thay đổi
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -117,7 +118,7 @@ function MusicPlayer({
     if (track.audioUrl) setLoadingTrack(true);
   }, [track.audioUrl]);
 
-  // control playback on isPlaying toggle without resetting src
+  // control playback
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -152,7 +153,9 @@ function MusicPlayer({
     };
     audio.addEventListener("timeupdate", hTime);
     audio.addEventListener("loadedmetadata", hMeta);
-    const hEnded = () => { onNext && onNext(); };
+    const hEnded = () => {
+      onNext && onNext();
+    };
     audio.addEventListener("ended", hEnded);
     return () => {
       audio.removeEventListener("timeupdate", hTime);
@@ -180,21 +183,39 @@ function MusicPlayer({
           <div
             ref={progressRef}
             className="w-full h-[6px] md:h-[8px] bg-white/10 rounded cursor-pointer"
-            onMouseDown={(e) => { setDragging(true); setSeekFromClientX(e.clientX); }}
+            onMouseDown={(e) => {
+              setDragging(true);
+              setSeekFromClientX(e.clientX);
+            }}
             onMouseUp={() => setDragging(false)}
             onMouseLeave={() => setDragging(false)}
-            onMouseMove={(e) => { if (dragging) setSeekFromClientX(e.clientX); }}
-            onClick={(e) => { setSeekFromClientX(e.clientX); }}
-            onTouchStart={(e) => { const t = e.touches[0]; setSeekFromClientX(t.clientX); }}
-            onTouchMove={(e) => { const t = e.touches[0]; setSeekFromClientX(t.clientX); }}
+            onMouseMove={(e) => {
+              if (dragging) setSeekFromClientX(e.clientX);
+            }}
+            onClick={(e) => {
+              setSeekFromClientX(e.clientX);
+            }}
+            onTouchStart={(e) => {
+              const t = e.touches[0];
+              setSeekFromClientX(t.clientX);
+            }}
+            onTouchMove={(e) => {
+              const t = e.touches[0];
+              setSeekFromClientX(t.clientX);
+            }}
           >
-            <div className="h-full bg-primary-500 rounded" style={{ width: `${progressPercentage}%` }} />
+            <div
+              className="h-full bg-primary-500 rounded"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => { (onPrev ? onPrev() : ctxActions.prev()); }}
+              onClick={() => {
+                onPrev ? onPrev() : ctxActions.prev();
+              }}
               className="p-2 text-gray-300 hover:text-white"
             >
               <FiSkipBack className="w-5 h-5" />
@@ -210,7 +231,9 @@ function MusicPlayer({
               )}
             </button>
             <button
-              onClick={() => { (onNext ? onNext() : ctxActions.next()); }}
+              onClick={() => {
+                onNext ? onNext() : ctxActions.next();
+              }}
               className="p-2 text-gray-300 hover:text-white"
             >
               <FiSkipForward className="w-5 h-5" />
@@ -220,12 +243,18 @@ function MusicPlayer({
             </span>
           </div>
 
-          <div className="flex items-center gap-3 min-w-0 flex-1" onClick={() => {
-            const idOrSlug = track.slug || track.id || track._id;
-            if (!idOrSlug) return;
-            const path = track.type === 'video' ? `/videos/details/${idOrSlug}` : `/songs/details/${idOrSlug}`;
-            window.location.href = path;
-          }}>
+          <div
+            className="flex items-center gap-3 min-w-0 flex-1"
+            onClick={() => {
+              const idOrSlug = track.slug || track.id || track._id;
+              if (!idOrSlug) return;
+              const path =
+                track.type === "video"
+                  ? `/videos/details/${idOrSlug}`
+                  : `/songs/details/${idOrSlug}`;
+              window.location.href = path;
+            }}
+          >
             <img
               src={cover || "/placeholder-cover.jpg"}
               alt="cover"
@@ -257,23 +286,32 @@ function MusicPlayer({
                 onChange={(e) => {
                   const v = parseFloat(e.target.value);
                   setVolume(v);
-                  const a = audioRef.current; if (a) a.volume = v;
-                  (onSetVolume ? onSetVolume(v) : ctxActions.setVolume(v));
+                  const a = audioRef.current;
+                  if (a) a.volume = v;
+                  onSetVolume ? onSetVolume(v) : ctxActions.setVolume(v);
                 }}
                 className="w-24"
               />
             </div>
             <button
-              className={`p-2 rounded ${repeatLabel !== "none" ? "bg-white/10" : ""}`}
+              className={`p-2 rounded ${
+                repeatLabel !== "none" ? "bg-white/10" : ""
+              }`}
               title={`repeat: ${repeatLabel}`}
-              onClick={() => { (onCycleRepeat ? onCycleRepeat() : ctxActions.cycleRepeat()); }}
+              onClick={() => {
+                onCycleRepeat ? onCycleRepeat() : ctxActions.cycleRepeat();
+              }}
             >
               <FiRepeat className="w-5 h-5 text-gray-300" />
             </button>
             <button
               className={`p-2 rounded ${shuffleActive ? "bg-white/10" : ""}`}
               title={shuffleActive ? "Shuffle on" : "Shuffle off"}
-              onClick={() => { (onToggleShuffle ? onToggleShuffle() : ctxActions.toggleShuffle()); }}
+              onClick={() => {
+                onToggleShuffle
+                  ? onToggleShuffle()
+                  : ctxActions.toggleShuffle();
+              }}
             >
               <FiShuffle className="w-5 h-5 text-gray-300" />
             </button>
@@ -283,28 +321,51 @@ function MusicPlayer({
               onClick={() => {
                 const token = localStorage.getItem("token");
                 if (!token) {
-                  const evt = new CustomEvent("open-auth-modal", { detail: { mode: "login" } });
+                  const evt = new CustomEvent("open-auth-modal", {
+                    detail: { mode: "login" },
+                  });
                   window.dispatchEvent(evt);
                   return;
                 }
                 const localToken = localStorage.getItem("localToken");
                 if (!localToken) {
-                  alert("Bạn chưa bật lưu Playlist local. Vào đăng ký và chọn opt-in để sử dụng.");
+                  alert(
+                    "Bạn chưa bật lưu Playlist local. Vào đăng ký và chọn opt-in để sử dụng."
+                  );
                   return;
                 }
-                const refId = sanitize(track._id || track.id || track.slug || track.title || track.name || "");
+                const refId = sanitize(
+                  track._id ||
+                    track.id ||
+                    track.slug ||
+                    track.title ||
+                    track.name ||
+                    ""
+                );
                 if (!refId) return;
-                const thumb = cover || sanitize(track.thumbnailUrl || track.thumb || '')
-                window.dispatchEvent(new CustomEvent('open-playlist-picker', { detail: { refId, type: 'song', thumbnail: thumb } }))
+                const thumb =
+                  cover || sanitize(track.thumbnailUrl || track.thumb || "");
+                window.dispatchEvent(
+                  new CustomEvent("open-playlist-picker", {
+                    detail: { refId, type: "song", thumbnail: thumb },
+                  })
+                );
               }}
             >
               <FiPlus className="w-5 h-5 text-gray-300" />
             </button>
-            
           </div>
         </div>
         {toast && (
-          <div className={`absolute -top-8 right-2 px-3 py-1 rounded text-sm ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-yellow-500 text-black'}`}>{toast.message}</div>
+          <div
+            className={`absolute -top-8 right-2 px-3 py-1 rounded text-sm ${
+              toast.type === "success"
+                ? "bg-green-600 text-white"
+                : "bg-yellow-500 text-black"
+            }`}
+          >
+            {toast.message}
+          </div>
         )}
       </div>
     </div>
